@@ -1,0 +1,32 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environnement virtuel
+env/
+venv/
+ENV/
+
+# Fichiers sensibles
+.env
+settings.py
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# PyInstaller
+*.spec
