@@ -3,54 +3,65 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent / "main"))
 
-
-# main.py
-import customtkinter as ctk
-
 from page.page_1_connection.code.connection_db import message_bienvenu, connect_to_database
-from settings import APP_NAME, VERSION , DB_CONFIG
+from settings import APP_NAME, VERSION, DB_CONFIG, APP_SECRET
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
+)
+from PyQt6.QtCore import Qt
 
-def bouton_connection():
-    nom = input_pseudo.get().strip()
-    if not nom:
-        message_info.configure(text="Veuillez entrer un identifiant.")
-        return
-    password = input_password.get().strip()
-    if not password:
-        message_info.configure(text="Veuillez entrer un mot de passe.")
-        return
-    if nom == DB_CONFIG['user'] and password == DB_CONFIG['password']:
-        connection = None
-        try:
-            connection, error = connect_to_database()
-            if connection:
-                message_info.configure(text=message_bienvenu(nom))
-                connection.close()
-            else:
-                message_info.configure(text="Échec de la connexion à la base de données.")
-        except Exception as e:
-            message_info.configure(text=f"Identifiants incorrects.")
-    else:
-        message_info.configure(text="Identifiants incorrects.")
+class LoginWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle(f"{APP_NAME} - v{VERSION}")
+        self.resize(400, 250)
 
-# Interface de base
-ctk.set_appearance_mode("light")
-ctk.set_default_color_theme("blue")
+        layout = QVBoxLayout()
 
-ecran = ctk.CTk()
-ecran.geometry("400x250")
-ecran.title(f"{APP_NAME} - v{VERSION}")
+        self.input_pseudo = QLineEdit()
+        self.input_pseudo.setPlaceholderText("Entrez votre prénom")
+        layout.addWidget(self.input_pseudo)
 
-input_pseudo = ctk.CTkEntry(ecran, placeholder_text="Entrez votre prénom")
-input_pseudo.pack(pady=20)
+        self.input_password = QLineEdit()
+        self.input_password.setEchoMode(QLineEdit.EchoMode.Password)
+        self.input_password.setPlaceholderText("Entrez votre mot de passe")
+        layout.addWidget(self.input_password)
 
-input_password = ctk.CTkEntry(ecran, placeholder_text="Entrez votre mot de passe", show="*")
-input_password.pack(pady=10)
+        self.bouton = QPushButton("Démarrer")
+        self.bouton.clicked.connect(self.bouton_connection)
+        layout.addWidget(self.bouton)
 
-bouton = ctk.CTkButton(ecran, text="Démarrer", command=bouton_connection)
-bouton.pack()
+        self.message_info = QLabel("")
+        self.message_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.message_info)
 
-message_info = ctk.CTkLabel(ecran, text="")
-message_info.pack(pady=20)
+        self.setLayout(layout)
 
-ecran.mainloop()
+    def bouton_connection(self):
+        nom = self.input_pseudo.text().strip()
+        if not nom:
+            self.message_info.setText("Veuillez entrer un identifiant.")
+            return
+        password = self.input_password.text().strip()
+        if not password:
+            self.message_info.setText("Veuillez entrer un mot de passe.")
+            return
+
+        if nom == DB_CONFIG['user'] and password == DB_CONFIG['password']:
+            try:
+                connection, error = connect_to_database()
+                if connection:
+                    self.message_info.setText(message_bienvenu(nom))
+                    connection.close()
+                else:
+                    self.message_info.setText("Échec de la connexion à la base de données.")
+            except Exception as e:
+                self.message_info.setText("Identifiants incorrects.")
+        else:
+            self.message_info.setText("Identifiants incorrects.")
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    fenetre = LoginWindow()
+    fenetre.show()
+    sys.exit(app.exec())
