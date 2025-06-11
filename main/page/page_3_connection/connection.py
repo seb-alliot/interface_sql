@@ -30,6 +30,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("Interface perso sql")
         self.resize(600, 400)
         center_on_screen(self)
+
         layout = QVBoxLayout()
 
         self.welcome_label = QLabel(f"Vous êtes sur la page de login.")
@@ -47,15 +48,27 @@ class LoginWindow(QWidget):
         center_on_screen(self)
         main_vertical_layout = QVBoxLayout()
         main_vertical_layout.addStretch(1)
+        self.setFocus()
 
         # Sous-layout pour les éléments de connexion (inputs, bouton, message)
         content_layout = QVBoxLayout()
         content_layout.setAlignment(Qt.AlignmentFlag.AlignCenter) # Centre horizontalement les widgets dans ce layout
 
+        # Titre principal
+        self.title_label = QLabel("Vous êtes sur la page de connection.")
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
+        content_layout.addWidget(self.title_label)
+
+        # Message dynamique
+        self.message_label = QLabel("")
+        self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.message_label.setStyleSheet("font-size: 14px; color: orange;")
+        content_layout.addWidget(self.message_label)
+
         self.input_pseudo = QLineEdit()
         self.input_pseudo.setMinimumSize(200, 30)
         self.input_pseudo.setMaximumSize(300, 30)
-        self.input_pseudo.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.input_pseudo.setEchoMode(QLineEdit.EchoMode.Normal)  # Normal pour le pseudo
         self.input_pseudo.setPlaceholderText("Entrez votre prénom")
         self.input_pseudo.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -65,12 +78,10 @@ class LoginWindow(QWidget):
         self.input_password = QLineEdit()
         self.input_password.setMinimumSize(200, 30)
         self.input_password.setMaximumSize(300, 30)
-        self.input_password.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.input_password.setEchoMode(QLineEdit.EchoMode.Password)
         self.input_password.setPlaceholderText("Votre mot de passe")
         self.input_password.setAlignment(Qt.AlignmentFlag.AlignCenter)  # <-- Ceci centre le texte et le placeholder
         content_layout.addWidget(self.input_password, alignment=Qt.AlignmentFlag.AlignCenter)
-
 
         self.bouton = QPushButton("Se connecter")
         self.bouton.setMinimumSize(200, 30)

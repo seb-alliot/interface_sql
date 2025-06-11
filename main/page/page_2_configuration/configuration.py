@@ -1,12 +1,11 @@
 import sys
 from pathlib import Path
-from settings import APP_NAME, VERSION, DB_CONFIG
+from settings import APP_NAME, VERSION
 
 sys.path.append(str(Path(__file__).resolve().parent / "main"))
-# on initialise toujours PyQt6 pour les nouvelles fenêtres
-# c'est le moteur graphique de l'application
+
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
+    QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
 )
 from PyQt6.QtCore import Qt
 
@@ -15,40 +14,34 @@ from main.utils.save_donne.config_bdd import save_bdd_config
 
 from main import center_on_screen
 
-# --- Classe MainWindow ---
-class MainWindow(QWidget):
+class ConfigurationWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Interface perso sql")
-        self.resize(600, 400)
-        center_on_screen(self)
-        layout = QVBoxLayout()
-
-        self.welcome_label = QLabel(f"Vous êtes sur la page de configuration de la base de donnée.")
-        self.welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.welcome_label)
-
-        self.setLayout(layout)
-
-class ConfigurationWindow(QWidget):
-    def __init__(self, nom):
-        super().__init__()
-        self.nom = nom
         self.setWindowTitle(f"{APP_NAME} - v{VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
+        self.setFocus()
 
         self.inputs = {}
-        main_vertical_layout = QVBoxLayout()
-        main_vertical_layout.addStretch(1)
 
+        # Layouts
+        main_vertical_layout = QVBoxLayout()
         content_layout = QVBoxLayout()
         content_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        # Titre principal
+        self.title_label = QLabel("Vous êtes sur la page de configuration de la base de donnée.")
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
+        content_layout.addWidget(self.title_label)
+
+        # Message dynamique
         self.message_label = QLabel("")
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.message_label.setStyleSheet("font-size: 14px; color: orange;")
         content_layout.addWidget(self.message_label)
 
+        # Champs de saisie
         champs = [
             ("bdd_name", "Entrez le nom de la base de données", QLineEdit.EchoMode.Normal),
             ("user", "Entrez le nom d'utilisateur", QLineEdit.EchoMode.Normal),
@@ -62,13 +55,15 @@ class ConfigurationWindow(QWidget):
             self.inputs[nom_input] = champ
             content_layout.addWidget(champ, alignment=Qt.AlignmentFlag.AlignCenter)
 
+        # Bouton de validation
         self.validation_button = QPushButton("Valider la configuration")
         self.validation_button.setMinimumSize(200, 30)
         self.validation_button.setMaximumSize(300, 30)
-        self.validation_button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.validation_button.clicked.connect(self.bouton_validation)
         content_layout.addWidget(self.validation_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
+        # Organisation finale
+        main_vertical_layout.addStretch(1)
         main_vertical_layout.addLayout(content_layout)
         main_vertical_layout.addStretch(1)
         self.setLayout(main_vertical_layout)
@@ -77,41 +72,40 @@ class ConfigurationWindow(QWidget):
         champ = QLineEdit()
         champ.setMinimumSize(200, 30)
         champ.setMaximumSize(300, 30)
-        champ.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         champ.setEchoMode(echo_mode)
         champ.setPlaceholderText(placeholder)
         champ.setAlignment(Qt.AlignmentFlag.AlignCenter)
         return champ
 
     def bouton_validation(self):
-        name = self.inputs["bdd_name"].text().strip()
+        dbname = self.inputs["bdd_name"].text().strip()
         user = self.inputs["user"].text().strip()
         password = self.inputs["password"].text().strip()
         host = self.inputs["host"].text().strip()
         port_text = self.inputs["port"].text().strip()
 
-        if not (name and user and password and host and port_text):
+        if not (dbname and user and password and host and port_text):
             self.afficher_message("Veuillez remplir tous les champs.")
             return
 
         try:
             port = int(port_text)
-            if port < 1 or port > 65535:
+            if not (1 <= port <= 65535):
                 raise ValueError
         except ValueError:
             self.afficher_message("Le port doit être un nombre entre 1 et 65535.")
             return
 
-        DB_CONFIG = {
-            "DB_NAME": self.inputs["bdd_name"].text().strip(),
-            "DB_USER": self.inputs["user"].text().strip(),
-            "DB_PASSWORD": self.inputs["password"].text().strip(),
-            "DB_HOST": self.inputs["host"].text().strip(),
-            "DB_PORT": self.inputs["port"].text().strip(),
+        db_config = {
+            "DB_NAME": dbname,
+            "DB_USER": user,
+            "DB_PASSWORD": password,
+            "DB_HOST": host,
+            "DB_PORT": port,
         }
 
         try:
-            save_bdd_config(DB_CONFIG)
+            save_bdd_config(db_config)
             self.afficher_message("Configuration enregistrée avec succès !")
             fade_widget(self, duration=300, fade_in=False, finished_callback=self.on_fade_out_finished)
         except FileNotFoundError as e:
@@ -119,12 +113,12 @@ class ConfigurationWindow(QWidget):
         except Exception as e:
             self.afficher_message(f"Erreur lors de l'enregistrement : {e}")
 
-
     def on_fade_out_finished(self):
         self.close()
-        self.main_window = MainWindow()
-        fade_widget(self.main_window, duration=300, fade_in=True)
-        self.main_window.show()
+        from main.page.page_1_verification import VerificationWindow
+        self.restart_window = VerificationWindow()
+        fade_widget(self.restart_window, duration=300, fade_in=True)
+        self.restart_window.show()
 
     def afficher_message(self, message):
         self.message_label.setText(message)

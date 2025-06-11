@@ -12,6 +12,3 @@ def connect_to_database(DB_CONFIG=settings.DB_CONFIG):
         return connection, None
     except OperationalError as e:
         return None, str(e)
-
-
-

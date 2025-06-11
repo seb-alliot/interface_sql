@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv(override=True)
 
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(project_root) not in sys.path:
@@ -13,13 +15,12 @@ from main.utils.regle_visuel.transition_connection import TransitionWindow
 from main.page.page_2_configuration.configuration import ConfigurationWindow
 from main.page.page_3_connection.connection import LoginWindow
 
-from settings import APP_NAME, VERSION, DB_CONFIG
+from settings import APP_NAME, VERSION, MAJ_DB_CONFIG
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QScreen
-
 
 class VerificationWindow(QWidget):
     def __init__(self):
@@ -38,15 +39,16 @@ class VerificationWindow(QWidget):
         self.verifier_et_ouvrir()
 
     def verifier_connexion(self):
-        connection, erreur = connect_to_database(DB_CONFIG)
+        connection, erreur = connect_to_database(MAJ_DB_CONFIG())
         if connection:
-            print(f"les paramètres de connexion sont : {DB_CONFIG}")
             return True
         else:
             return False
 
 
     def verifier_et_ouvrir(self):
+        load_dotenv(override=True)
+        DB_CONFIG = MAJ_DB_CONFIG()
         connection, erreur = connect_to_database(DB_CONFIG)
         if connection:
             self.label_info.setText("Connexion à la base de donnée réussie !")
@@ -57,13 +59,14 @@ class VerificationWindow(QWidget):
 
     def ouvrir_fenetre_principale(self):
         self.close()
+        load_dotenv(override=True)
         self.main_window = LoginWindow(f"{APP_NAME} - v{VERSION}")
         fade_widget(self.main_window, duration=300, fade_in=True)
         self.main_window.show()
 
     def ouvrir_fenetre_configuration(self):
         self.close()
-        self.config_window = ConfigurationWindow(f"{APP_NAME} - v{VERSION}")
+        self.config_window = ConfigurationWindow()
         fade_widget(self.config_window, duration=300, fade_in=True)
         self.config_window.show()
 
