@@ -17,10 +17,9 @@ from main.page.page_3_connection.connection import LoginWindow
 
 from settings import APP_NAME, VERSION, MAJ_DB_CONFIG
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
+    QApplication, QWidget, QVBoxLayout, QLabel
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QScreen
 
 class VerificationWindow(QWidget):
     def __init__(self):

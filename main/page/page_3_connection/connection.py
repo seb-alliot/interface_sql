@@ -55,7 +55,7 @@ class LoginWindow(QWidget):
         content_layout.setAlignment(Qt.AlignmentFlag.AlignCenter) # Centre horizontalement les widgets dans ce layout
 
         # Titre principal
-        self.title_label = QLabel("Vous êtes sur la page de connection.")
+        self.title_label = QLabel("Connection à la base de données")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
         content_layout.addWidget(self.title_label)

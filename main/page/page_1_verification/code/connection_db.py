@@ -8,7 +8,7 @@ def get_connection(DB_CONFIG):
 
 def connect_to_database(DB_CONFIG=settings.DB_CONFIG):
     try:
-        connection = get_connection(DB_CONFIG)  # <-- Ici on utilise le paramètre reçu
+        connection = get_connection(DB_CONFIG)  
         return connection, None
     except OperationalError as e:
         return None, str(e)

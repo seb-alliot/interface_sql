@@ -30,7 +30,7 @@ class ConfigurationWindow(QWidget):
         content_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Titre principal
-        self.title_label = QLabel("Vous êtes sur la page de configuration de la base de donnée.")
+        self.title_label = QLabel("Configuration de la base de donnée.")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
         content_layout.addWidget(self.title_label)
@@ -107,7 +107,7 @@ class ConfigurationWindow(QWidget):
         try:
             save_bdd_config(db_config)
             self.afficher_message("Configuration enregistrée avec succès !")
-            fade_widget(self, duration=300, fade_in=False, finished_callback=self.on_fade_out_finished)
+            fade_widget(self, duration=1500, fade_in=False, finished_callback=self.on_fade_out_finished)
         except FileNotFoundError as e:
             self.afficher_message(str(e))
         except Exception as e:
