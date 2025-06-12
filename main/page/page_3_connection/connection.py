@@ -6,10 +6,10 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 # --- Fin de la correction ---
 
-from main.page.page_1_verification.code.connection_db import connect_to_database
+from main.page.page_1_verification.connection_db import connect_to_database
 from main import center_on_screen
-from main.utils.regle_visuel.fad_widjet import fade_widget
-from main.utils.regle_visuel.transition_connection import TransitionWindow
+from main.utils.regles_visuelles.fad_widjet import fade_widget
+from main.utils.regles_visuelles.transition_connection import TransitionWindow
 from main.page.page_2_configuration.configuration import ConfigurationWindow
 from main.page.page_4_menu.menu import MenuWindow
 
@@ -145,6 +145,10 @@ class LoginWindow(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    fenetre = LoginWindow()
+
+    from main.page.page_1_verification.verification import VerificationWindow
+
+    fenetre = VerificationWindow()
     fenetre.show()
+
     sys.exit(app.exec())

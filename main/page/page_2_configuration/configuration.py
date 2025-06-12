@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from main.utils.regle_visuel.fad_widjet import fade_widget
+from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.save_donne.config_bdd import save_bdd_config
 
 from main import center_on_screen
@@ -115,7 +115,7 @@ class ConfigurationWindow(QWidget):
 
     def on_fade_out_finished(self):
         self.close()
-        from main.page.page_1_verification import VerificationWindow
+        from main.page.page_1_verification.verification import VerificationWindow
         self.restart_window = VerificationWindow()
         fade_widget(self.restart_window, duration=300, fade_in=True)
         self.restart_window.show()

@@ -9,15 +9,14 @@ from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QComboBox
 )
 from PyQt6.QtCore import Qt
-from main.page.page_1_verification.code.connection_db import connect_to_database
-
+from main.page.page_1_verification.connection_db import connect_to_database
+from main.utils import Close
 class MenuWindow(QWidget):
     def __init__(self, username=None):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         self.setFocus()
-
 
         layout = QVBoxLayout()
 
@@ -69,10 +68,7 @@ class MenuWindow(QWidget):
         except Exception as e:
             return ["Erreur lors de la récupération des bases de données"]
         finally:
-            if cursor:
-                cursor.close()
-            if connection_bdd:
-                connection_bdd.close()
+            Close(cursor, connection_bdd)
 
 if __name__ == "__main__":
     app = QApplication([])

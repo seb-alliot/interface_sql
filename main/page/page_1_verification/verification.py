@@ -1,25 +1,14 @@
-import sys
-from pathlib import Path
-from dotenv import load_dotenv
-load_dotenv(override=True)
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PyQt6.QtCore import Qt , QTimer
 
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.append(str(project_root))
-# --- Fin de la correction ---
-
-from main.page.page_1_verification.code.connection_db import connect_to_database
+from main.page.page_1_verification.connection_db import connect_to_database
 from main import center_on_screen
-from main.utils.regle_visuel.fad_widjet import fade_widget
-from main.utils.regle_visuel.transition_connection import TransitionWindow
+from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.page.page_2_configuration.configuration import ConfigurationWindow
 from main.page.page_3_connection.connection import LoginWindow
-
 from settings import APP_NAME, VERSION, MAJ_DB_CONFIG
-from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLabel
-)
-from PyQt6.QtCore import Qt
+from dotenv import load_dotenv
+
 
 class VerificationWindow(QWidget):
     def __init__(self):
@@ -34,43 +23,32 @@ class VerificationWindow(QWidget):
         layout.addWidget(self.label_info)
         self.setLayout(layout)
 
-        # On lance la vérification à la création (ou peut-être via un bouton)
-        self.verifier_et_ouvrir()
-
-    def verifier_connexion(self):
-        connection, erreur = connect_to_database(MAJ_DB_CONFIG())
-        if connection:
-            return True
-        else:
-            return False
-
+        # Lancer la vérification après un petit délai pour laisser le temps à l'affichage
+        QTimer.singleShot(100, self.verifier_et_ouvrir)
 
     def verifier_et_ouvrir(self):
         load_dotenv(override=True)
         DB_CONFIG = MAJ_DB_CONFIG()
         connection, erreur = connect_to_database(DB_CONFIG)
         if connection:
-            self.label_info.setText("Connexion à la base de donnée réussie !")
-            fade_widget(self, duration=300, fade_in=False, finished_callback=self.ouvrir_fenetre_principale)
+            self.label_info.setText("Connexion réussie !")
+            fade_widget(self, duration=500, fade_in=False, finished_callback=self.afficher_login_window)
         else:
             self.label_info.setText("Connexion échouée, veuillez configurer la base.")
-            fade_widget(self, duration=300, fade_in=False, finished_callback=self.ouvrir_fenetre_configuration)
+            fade_widget(self, duration=500, fade_in=False, finished_callback=self.afficher_configuration_window)
 
-    def ouvrir_fenetre_principale(self):
-        self.close()
-        load_dotenv(override=True)
+    def afficher_login_window(self):
+        # Cacher cette fenêtre sans la fermer brutalement
+        self.hide()
         self.main_window = LoginWindow(f"{APP_NAME} - v{VERSION}")
-        fade_widget(self.main_window, duration=300, fade_in=True)
         self.main_window.show()
+        fade_widget(self.main_window, duration=500, fade_in=True)
+        # Détruire l'ancienne fenêtre après un court délai
+        QTimer.singleShot(1000, self.deleteLater)
 
-    def ouvrir_fenetre_configuration(self):
-        self.close()
+    def afficher_configuration_window(self):
+        self.hide()
         self.config_window = ConfigurationWindow()
-        fade_widget(self.config_window, duration=300, fade_in=True)
         self.config_window.show()
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    fenetre = VerificationWindow()
-    fenetre.show()
-    sys.exit(app.exec())
+        fade_widget(self.config_window, duration=500, fade_in=True)
+        QTimer.singleShot(1000, self.deleteLater)
