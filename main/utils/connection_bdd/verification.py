@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt , QTimer
 from main.utils.connection_bdd.connection_db import connect_to_sql_database
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
-from main.utils.save_donne.configuration import ConfigurationWindow
+from main.page.configuration.configuration import ConfigurationWindow
 
 from settings import APP_NAME, VERSION, POSTGRESQL_CONFIG
 from dotenv import load_dotenv

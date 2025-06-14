@@ -10,7 +10,7 @@ from main.utils.connection_bdd.connection_db import connect_to_database, connect
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.regles_visuelles.transition_connection import TransitionWindow
-from main.utils.save_donne.configuration import ConfigurationWindow
+from main.page.configuration.configuration import ConfigurationWindow
 from main.page.page_2_menu.menu import MenuWindow
 
 

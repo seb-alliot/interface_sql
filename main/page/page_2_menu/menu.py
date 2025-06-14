@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt , QTimer
 from main.utils.connection_bdd.connection_db import connect_to_database, connect_to_sql_database
 from main.utils import Close
+
 class MenuWindow(QWidget):
     def __init__(self , db_type):
         super().__init__()
@@ -61,6 +62,27 @@ class MenuWindow(QWidget):
         layout.addLayout(content_layout)
         self.setLayout(layout)
 
+        content_layout = QVBoxLayout()
+        self.retour_button = QPushButton("Retour")
+        content_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.retour_button.setMinimumSize(200, 30)
+        self.retour_button.setMaximumSize(300, 30)
+        self.retour_button.setMinimumHeight(30)
+        self.retour_button.setMaximumHeight(45)
+        self.retour_button.clicked.connect(self.retour)
+        content_layout.addWidget(self.retour_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addLayout(content_layout)
+        self.setLayout(layout)
+
+    def retour(self):
+        self.hide()
+        from main.page.page_1_bdd.select_bdd import ChoixBDDWindow
+        self.main_window = ChoixBDDWindow()
+        self.main_window.show()
+        from main.utils.regles_visuelles.fad_widjet import fade_widget
+        fade_widget(self.main_window, duration=500, fade_in=True)
+        QTimer.singleShot(1000, self.deleteLater)
+
     def list_bdd(self):
         if self.db_type not in ["PostgreSQL", "SQLite"]:
             return ["Type de base de données non selectionné"]
@@ -109,13 +131,13 @@ class MenuWindow(QWidget):
 
     def configuration_bdd(self):
         self.hide()
-        from main.utils.save_donne.configuration import ConfigurationWindow
+        from main.page.configuration.configuration import ConfigurationWindow
         self.main_window = ConfigurationWindow(db_type=self.db_type)
-        print(f"Configuration de la base de données : {self.db_type}")
         self.main_window.show()
         from main.utils.regles_visuelles.fad_widjet import fade_widget
         fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
+
 if __name__ == "__main__":
     app = QApplication([])
     fenetre = MenuWindow()

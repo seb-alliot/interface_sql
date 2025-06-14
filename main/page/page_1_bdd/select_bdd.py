@@ -3,9 +3,10 @@ from PyQt6.QtCore import Qt
 from main.utils.connection_bdd.verification import VerificationWindow
 from main.page.page_2_menu.menu import MenuWindow
 from main.utils.connection_bdd.connection_db import connect_to_sql_database
-from main.utils.save_donne.configuration import ConfigurationWindow
+from main.page.configuration.configuration import ConfigurationWindow
 from main.page.page_3_login.login import LoginWindow
 import settings
+from settings import POSTGRESQL_CONFIG
 
 
 from main.utils.regles_visuelles.fad_widjet import fade_widget
@@ -46,7 +47,7 @@ class ChoixBDDWindow(QWidget):
     def tester_connection(self):
         choix = self.combo.currentText()
         if choix == "PostgreSQL":
-            db_config = settings.POSTGRES_DB
+            db_config = POSTGRESQL_CONFIG()
             auto_connect = settings.POSTGRESQL_AUTO_CONNECT
             connection, error = connect_to_sql_database(db_config)
 
