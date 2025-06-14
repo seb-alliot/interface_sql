@@ -6,15 +6,15 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 # --- Fin de la correction ---
 
-from main.page.page_1_verification.connection_db import connect_to_database
+from main.utils.connection_bdd.connection_db import connect_to_database, connect_to_sql_database
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.regles_visuelles.transition_connection import TransitionWindow
-from main.page.page_2_configuration.configuration import ConfigurationWindow
-from main.page.page_4_menu.menu import MenuWindow
+from main.utils.save_donne.configuration import ConfigurationWindow
+from main.page.page_2_menu.menu import MenuWindow
 
 
-from settings import APP_NAME, VERSION, DB_CONFIG
+from settings import APP_NAME, VERSION, POSTGRES_DB, MAJ_DB_CONFIG, POSTGRESQL_CONFIG
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
 )
@@ -23,31 +23,15 @@ from PyQt6.QtGui import QScreen
 
 
 
-# --- Classe MainWindow ---
-class MainWindow(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Interface perso sql")
-        self.resize(600, 400)
-        center_on_screen(self)
-
-        layout = QVBoxLayout()
-
-        self.welcome_label = QLabel(f"Vous êtes sur la page de login.")
-        self.welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.welcome_label)
-
-        self.setLayout(layout)
-
 class LoginWindow(QWidget):
-    def __init__(self, nom):
+    def __init__(self, db_type):
         super().__init__()
-        self.nom = nom
         self.setWindowTitle(f"{APP_NAME} - v{VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
         main_vertical_layout = QVBoxLayout()
         main_vertical_layout.addStretch(1)
+        self.db_type = db_type
         self.setFocus()
 
         # Sous-layout pour les éléments de connexion (inputs, bouton, message)
@@ -114,19 +98,34 @@ class LoginWindow(QWidget):
             self.message_info.setText("Veuillez entrer un mot de passe.")
             return
 
-        if nom == DB_CONFIG['user'] and password == DB_CONFIG['password']:
+        if self.db_type == "PostgreSQL":
+            identifiant = POSTGRESQL_CONFIG(user=nom, password=password)
             try:
-                connection, error = connect_to_database()
+                auto_connect = POSTGRES_DB.get("auto_connect")
+                if auto_connect in POSTGRESQL_CONFIG():
+                    del POSTGRES_DB["auto_connect"]
+                connection, error = connect_to_sql_database(identifiant)
                 if connection:
+                    self.message_info.setText("Connexion réussie !")
                     connection.close()
-                    # Lancement du fade sur la fenêtre entière
                     fade_widget(self, duration=300, fade_in=False, finished_callback=lambda: self.on_fade_out_finished(nom))
                 else:
-                    self.message_info.setText("Échec de la connexion à la base de données.")
+                    self.message_info.setText(f"Échec de la connexion : {error}")
             except Exception as e:
-                self.message_info.setText(f"Identifiants incorrects ou erreur : {e}")
+                self.message_info.setText(f"Erreur lors de la connexion : {e}")
         else:
-            self.message_info.setText("Identifiants incorrects.")
+            identifiant = MAJ_DB_CONFIG(user=nom, password=password)
+            try:
+                connection, error = connect_to_database(identifiant)
+                if connection:
+                    connection.close()
+                    fade_widget(self, duration=300, fade_in=False, finished_callback=lambda: self.on_fade_out_finished(nom))
+
+                else:
+                    self.message_info.setText(f"Échec de la connexion : {error}")
+            except Exception as e:
+                self.message_info.setText(f"Erreur lors de la connexion : {e}")
+
 
     def on_fade_out_finished(self, nom):
         self.close()
@@ -135,18 +134,18 @@ class LoginWindow(QWidget):
         self.transition_window.show()
 
     def start_main_window(self, nom):
-        fade_widget(self.transition_window, duration=300, fade_in=False, finished_callback=lambda: self.show_main_window(nom))
+        fade_widget(self.transition_window, duration=300, fade_in=False, finished_callback=lambda: self.show_main_window())
 
-    def show_main_window(self, nom):
+    def show_main_window(self):
         self.transition_window.close()
-        self.main_window = MenuWindow(nom)
+        self.main_window = MenuWindow(self.db_type)
         fade_widget(self.main_window, duration=300, fade_in=True)
         self.main_window.show()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    from main.page.page_1_verification.verification import VerificationWindow
+    from main.page.page_3_login.login import VerificationWindow
 
     fenetre = VerificationWindow()
     fenetre.show()

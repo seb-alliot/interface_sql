@@ -15,12 +15,13 @@ from main.utils.save_donne.config_bdd import save_bdd_config
 from main import center_on_screen
 
 class ConfigurationWindow(QWidget):
-    def __init__(self):
+    def __init__(self, db_type):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - v{VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
         self.setFocus()
+        self.db_type = db_type  # Type de base de données (PostgreSQL ou autre)
 
         self.inputs = {}
 
@@ -30,7 +31,7 @@ class ConfigurationWindow(QWidget):
         content_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Titre principal
-        self.title_label = QLabel("Configuration de la base de donnée.")
+        self.title_label = QLabel(f"Configuration de la base de donnée {db_type}.")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
         content_layout.addWidget(self.title_label)
@@ -43,7 +44,6 @@ class ConfigurationWindow(QWidget):
 
         # Champs de saisie
         champs = [
-            ("bdd_name", "Entrez le nom de la base de données", QLineEdit.EchoMode.Normal),
             ("user", "Entrez le nom d'utilisateur", QLineEdit.EchoMode.Normal),
             ("password", "Entrez le mot de passe", QLineEdit.EchoMode.Password),
             ("host", "Entrez l'hôte de la base de données", QLineEdit.EchoMode.Normal),
@@ -95,14 +95,21 @@ class ConfigurationWindow(QWidget):
         except ValueError:
             self.afficher_message("Le port doit être un nombre entre 1 et 65535.")
             return
-
-        db_config = {
-            "DB_NAME": dbname,
-            "DB_USER": user,
-            "DB_PASSWORD": password,
-            "DB_HOST": host,
-            "DB_PORT": port,
-        }
+        if self.db_type == "PostgreSQL":
+            db_config = {
+                "POSTGRESQL_USER": user,
+                "POSTGRESQL_PASSWORD": password,
+                "POSTGRESQL_HOST": host,
+                "POSTGRESQL_PORT": port,
+            }
+        else:
+            db_config = {
+                "DB_NAME": dbname,
+                "DB_USER": user,
+                "DB_PASSWORD": password,
+                "DB_HOST": host,
+                "DB_PORT": port,
+            }
 
         try:
             save_bdd_config(db_config)
@@ -115,8 +122,8 @@ class ConfigurationWindow(QWidget):
 
     def on_fade_out_finished(self):
         self.close()
-        from main.page.page_1_verification.verification import VerificationWindow
-        self.restart_window = VerificationWindow()
+        from main.utils.connection_bdd.verification import VerificationWindow
+        self.restart_window = VerificationWindow(db_type=self.db_type)
         fade_widget(self.restart_window, duration=300, fade_in=True)
         self.restart_window.show()
 

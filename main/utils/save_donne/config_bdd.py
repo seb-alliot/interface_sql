@@ -1,10 +1,5 @@
 def save_bdd_config(DB_CONFIG, env_path=".env"):
-    """
-    Enregistre la configuration de la base de données dans le fichier .env.
 
-    :param DB_CONFIG: Dictionnaire contenant les clés DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT.
-    :param env_path: Le chemin du fichier .env à mettre à jour.
-    """
     import os
 
     if not os.path.exists(env_path):
@@ -31,4 +26,3 @@ def save_bdd_config(DB_CONFIG, env_path=".env"):
 
         f.writelines(nouvelles_lignes)
         f.truncate()
-
