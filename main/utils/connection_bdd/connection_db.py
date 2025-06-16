@@ -3,8 +3,8 @@ from psycopg2 import OperationalError
 from settings import DB_CONFIG, MAJ_DB_CONFIG, POSTGRESQL_CONFIG
 
 
-def get_connection_sql(postgres_db_config):
-    return psycopg2.connect(**postgres_db_config)
+def get_connection_sql(db_config):
+    return psycopg2.connect(**db_config)
 
 
 def connect_to_sql_database(db_config=None):
@@ -15,6 +15,8 @@ def connect_to_sql_database(db_config=None):
         return connection, None
     except OperationalError as e:
         return None, str(e)
+
+
 
 
 def get_connection(db_config):

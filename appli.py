@@ -2,7 +2,11 @@ import sys
 import os
 from PyQt6.QtWidgets import QApplication
 
-base_path = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
+if getattr(sys, '_MEIPASS', False):
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+
 sys.path.insert(0, base_path)
 
 from main.page.page_1_bdd.select_bdd import ChoixBDDWindow
