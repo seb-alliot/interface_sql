@@ -1,5 +1,5 @@
-def Close(*arguments):
-    for arg in arguments:
+def Close(*args):
+    for arg in args:
         try:
             arg.close()
         except Exception as e:

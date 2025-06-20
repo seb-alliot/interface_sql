@@ -1,32 +1,39 @@
 import sys
 from pathlib import Path
-
+from dotenv import load_dotenv
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 # --- Fin de la correction ---
 
-from main.utils.connection_bdd.connection_db import connect_to_database, connect_to_sql_database
+from main.utils.gestion_bdd.connection_db import connect_to_database, connect_to_postgresql_database,  connect_to_maria_database
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.regles_visuelles.transition_connection import TransitionWindow
-from main.page.configuration.configuration import ConfigurationWindow
-from main.page.page_2_menu.menu import MenuWindow
+from main.page.menu import MenuWindow
+from main.utils.fonction_diverse.recharge_env import recharger_env
 
-
-from settings import APP_NAME, VERSION, POSTGRES_DB, MAJ_DB_CONFIG, POSTGRESQL_CONFIG
+from settings import (
+    APP_NAME,
+    VERSION,
+    POSTGRES_DB,
+    MARIA_AUTO_CONNECT,
+    POSTGRESQL_AUTO_CONNECT,
+    MAJ_DB_CONFIG,
+    POSTGRESQL_CONFIG,
+    MARIA_DB_CONFIG,
+)
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QScreen
 
 
 
 class LoginWindow(QWidget):
     def __init__(self, db_type):
         super().__init__()
-        self.setWindowTitle(f"{APP_NAME} - v{VERSION}")
+        self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
         main_vertical_layout = QVBoxLayout()
@@ -89,6 +96,7 @@ class LoginWindow(QWidget):
         self.main_window = None
 
     def bouton_connection(self):
+        recharger_env
         nom = self.input_pseudo.text().strip()
         if not nom:
             self.message_info.setText("Veuillez entrer un identifiant.")
@@ -99,55 +107,33 @@ class LoginWindow(QWidget):
             return
 
         if self.db_type == "PostgreSQL":
+
             identifiant = POSTGRESQL_CONFIG(user=nom, password=password)
-            try:
-                auto_connect = POSTGRES_DB.get("auto_connect")
-                if auto_connect in POSTGRESQL_CONFIG():
-                    del POSTGRES_DB["auto_connect"]
-                connection, error = connect_to_sql_database(identifiant)
-                if connection:
-                    self.message_info.setText("Connexion réussie !")
-                    connection.close()
-                    fade_widget(self, duration=300, fade_in=False, finished_callback=lambda: self.on_fade_out_finished(nom))
-                else:
+            connection, error = connect_to_postgresql_database(identifiant)
+            auto_connect = POSTGRESQL_AUTO_CONNECT
+        elif self.db_type == "MariaDB":
+            auto_connect = MARIA_AUTO_CONNECT
+            identifiant = MARIA_DB_CONFIG(user=nom, password=password)
+            connection, error = connect_to_maria_database(identifiant)
+        try:
+            if connection and auto_connect is True:
+                self.message_info.setText("Connexion réussie !")
+                connection.close()
+                fade_widget(self, duration=300, fade_in=False, finished_callback=lambda: self.show_main_window(nom))
+            elif connection and auto_connect is False:
+                self.message_info.setText("Veuillez entrer vos identifiants de connexion.")
+                fade_widget(self, duration=300, fade_in=False, finished_callback=lambda: self.show_main_window())
+            elif not connection:
+                if error:
                     self.message_info.setText(f"Échec de la connexion : {error}")
-            except Exception as e:
-                self.message_info.setText(f"Erreur lors de la connexion : {e}")
-        else:
-            identifiant = MAJ_DB_CONFIG(user=nom, password=password)
-            try:
-                connection, error = connect_to_database(identifiant)
-                if connection:
-                    connection.close()
-                    fade_widget(self, duration=300, fade_in=False, finished_callback=lambda: self.on_fade_out_finished(nom))
-
                 else:
-                    self.message_info.setText(f"Échec de la connexion : {error}")
-            except Exception as e:
-                self.message_info.setText(f"Erreur lors de la connexion : {e}")
+                    self.message_info.setText("Échec de la connexion, veuillez vérifier vos identifiants.")
 
-
-    def on_fade_out_finished(self, nom):
-        self.close()
-        self.transition_window = TransitionWindow(nom, on_transition_done=lambda: self.start_main_window(nom))
-        fade_widget(self.transition_window, duration=300, fade_in=True)
-        self.transition_window.show()
-
-    def start_main_window(self, nom):
-        fade_widget(self.transition_window, duration=300, fade_in=False, finished_callback=lambda: self.show_main_window())
+        except Exception as e:
+            self.message_info.setText(f"Erreur lors de la connexion : {e}")
 
     def show_main_window(self):
-        self.transition_window.close()
+        self.close()
         self.main_window = MenuWindow(self.db_type)
         fade_widget(self.main_window, duration=300, fade_in=True)
         self.main_window.show()
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    from main.page.page_3_login.login import VerificationWindow
-
-    fenetre = VerificationWindow()
-    fenetre.show()
-
-    sys.exit(app.exec())

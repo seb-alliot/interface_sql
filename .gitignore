@@ -7,13 +7,6 @@ env/
 venv/
 ENV/
 
-# Fichiers sensibles
-.env
-settings.py
-
-# MacOS
-.DS_Store
-
 # Logs
 *.log
 

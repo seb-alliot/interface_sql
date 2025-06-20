@@ -13,6 +13,11 @@ def save_bdd_config(DB_CONFIG, env_path=".env"):
         clef_entree = {clef: False for clef in DB_CONFIG.keys()}
 
         for ligne in lignes_lues:
+            # Ignorer lignes vides ou commentaires
+            if ligne.strip() == "" or ligne.lstrip().startswith("#"):
+                nouvelles_lignes.append(ligne)
+                continue
+            
             clef = ligne.split('=')[0].strip()
             if clef in DB_CONFIG:
                 nouvelles_lignes.append(f"{clef}={DB_CONFIG[clef]}\n")
