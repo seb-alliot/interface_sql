@@ -8,33 +8,34 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer
 
 from settings import (
-    APP_NAME, VERSION, POSTGRESQL_AUTO_CONNECT, POSTGRES_DB, POSTGRESQL_CONFIG,
-    MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
+    APP_NAME, VERSION
 )
+from main.utils.module.postgres import POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
+from main.utils.module.maria_db import MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
 
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.save_donne.config_bdd import save_bdd_config
-from main.page.menu import MenuWindow
+from main.page.menu_principal_bdd import Menu_Principal_Window
 from main import center_on_screen
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 class ConfigurationWindow(QWidget):
-    def __init__(self, db_type):
+    def __init__(self, style_base_donné):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - v{VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
         self.setFocus()
-        self.db_type = db_type
+        self.style_base_donné = style_base_donné
         self.inputs = {}
 
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Titre
-        self.title_label = QLabel(f"Configuration de la base de données {db_type}.")
+        self.title_label = QLabel(f"Configuration de la base de données {style_base_donné}.")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
         main_layout.addWidget(self.title_label)
@@ -46,19 +47,17 @@ class ConfigurationWindow(QWidget):
         main_layout.addWidget(self.message_label)
 
         # --- Gestion type de BDD ---
-        if db_type in ("PostgreSQL", "MariaDB"):
+        if style_base_donné in ("PostgreSQL", "MariaDB"):
             self.checkbox_auto_connect = QCheckBox("Connexion automatique")
-            if db_type == "PostgreSQL":
+            if style_base_donné == "PostgreSQL":
                 self.checkbox_auto_connect.setChecked(POSTGRESQL_AUTO_CONNECT)
                 config = POSTGRESQL_CONFIG()
-                default_vals = POSTGRES_DB or {}
             else:  # MariaDB
                 self.checkbox_auto_connect.setChecked(MARIA_AUTO_CONNECT)
                 config = MARIA_DB_CONFIG()
-                default_vals = config or {}
 
             main_layout.addWidget(self.checkbox_auto_connect, alignment=Qt.AlignmentFlag.AlignCenter)
-            champs = self.generer_champs_config(config or default_vals)
+            champs = self.generer_champs_config(config if config else {})
 
             for nom_input, placeholder, echo, valeur_defaut in champs:
                 champ = self.creer_input(placeholder, echo)
@@ -71,12 +70,12 @@ class ConfigurationWindow(QWidget):
             if champs:
                 self.inputs[champs[0][0]].setFocus()
 
-        elif db_type == "SQLite":
+        elif style_base_donné == "SQLite":
             self.message_label.setText("La configuration SQLite n’est pas encore disponible.")
             return
 
         else:
-            self.message_label.setText(f"Type de BDD non reconnu : {db_type}")
+            self.message_label.setText(f"Type de BDD non reconnu : {style_base_donné}")
             return
 
         # --- Boutons ---
@@ -117,11 +116,11 @@ class ConfigurationWindow(QWidget):
 
     def reload_config(self):
         load_dotenv(dotenv_path=dotenv_path, override=True)
-        if self.db_type == "PostgreSQL":
+        if self.style_base_donné == "PostgreSQL":
             global POSTGRESQL_AUTO_CONNECT
             POSTGRESQL_AUTO_CONNECT = os.getenv('POSTGRESQL_AUTO_CONNECT', 'False').lower() == 'true'
             self.checkbox_auto_connect.setChecked(POSTGRESQL_AUTO_CONNECT)
-        elif self.db_type == "MariaDB":
+        elif self.style_base_donné == "MariaDB":
             global MARIA_AUTO_CONNECT
             MARIA_AUTO_CONNECT = os.getenv('MARIA_AUTO_CONNECT', 'False').lower() == 'true'
             self.checkbox_auto_connect.setChecked(MARIA_AUTO_CONNECT)
@@ -147,7 +146,7 @@ class ConfigurationWindow(QWidget):
 
         auto_connect = self.checkbox_auto_connect.isChecked()
 
-        if self.db_type == "PostgreSQL":
+        if self.style_base_donné == "PostgreSQL":
             db_config = {
                 "POSTGRESQL_NAME": dbname,
                 "POSTGRESQL_USER": user,
@@ -156,7 +155,7 @@ class ConfigurationWindow(QWidget):
                 "POSTGRESQL_PORT": port_int,
                 "POSTGRESQL_AUTO_CONNECT": auto_connect,
             }
-        elif self.db_type == "MariaDB":
+        elif self.style_base_donné == "MariaDB":
             db_config = {
                 "MARIA_NAME": dbname,
                 "MARIA_USER": user,
@@ -178,14 +177,7 @@ class ConfigurationWindow(QWidget):
 
     def retour(self):
         self.hide()
-        self.main_window = MenuWindow(db_type=self.db_type)
+        self.main_window = Menu_Principal_Window(style_base_donné=self.style_base_donné)
         self.main_window.show()
         fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = ConfigurationWindow(db_type="PostgreSQL")
-    window.show()
-    sys.exit(app.exec())

@@ -5,23 +5,17 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 # --- Fin de la correction ---
-
-from main.utils.gestion_bdd.connection_db import connect_to_database, connect_to_postgresql_database,  connect_to_maria_database
+from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
+from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.regles_visuelles.transition_connection import TransitionWindow
-from main.page.menu import MenuWindow
+from main.page.menu_principal_bdd import Menu_Principal_Window
 from main.utils.fonction_diverse.recharge_env import recharger_env
 
 from settings import (
     APP_NAME,
     VERSION,
-    POSTGRES_DB,
-    MARIA_AUTO_CONNECT,
-    POSTGRESQL_AUTO_CONNECT,
-    MAJ_DB_CONFIG,
-    POSTGRESQL_CONFIG,
-    MARIA_DB_CONFIG,
 )
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
@@ -31,14 +25,14 @@ from PyQt6.QtCore import Qt
 
 
 class LoginWindow(QWidget):
-    def __init__(self, db_type):
+    def __init__(self, style_base_donné):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
         main_vertical_layout = QVBoxLayout()
         main_vertical_layout.addStretch(1)
-        self.db_type = db_type
+        self.style_base_donné = style_base_donné
         self.setFocus()
 
         # Sous-layout pour les éléments de connexion (inputs, bouton, message)
@@ -106,12 +100,12 @@ class LoginWindow(QWidget):
             self.message_info.setText("Veuillez entrer un mot de passe.")
             return
 
-        if self.db_type == "PostgreSQL":
+        if self.style_base_donné == "PostgreSQL":
 
             identifiant = POSTGRESQL_CONFIG(user=nom, password=password)
             connection, error = connect_to_postgresql_database(identifiant)
             auto_connect = POSTGRESQL_AUTO_CONNECT
-        elif self.db_type == "MariaDB":
+        elif self.style_base_donné == "MariaDB":
             auto_connect = MARIA_AUTO_CONNECT
             identifiant = MARIA_DB_CONFIG(user=nom, password=password)
             connection, error = connect_to_maria_database(identifiant)
@@ -134,6 +128,6 @@ class LoginWindow(QWidget):
 
     def show_main_window(self):
         self.close()
-        self.main_window = MenuWindow(self.db_type)
+        self.main_window = Menu_Principal_Window(self.style_base_donné)
         fade_widget(self.main_window, duration=300, fade_in=True)
         self.main_window.show()

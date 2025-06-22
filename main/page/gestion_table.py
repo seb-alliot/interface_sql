@@ -34,13 +34,13 @@ class GestionTableWindow(QWidget):
         }
     """
 
-    def __init__(self, db_type, dbname, table_name):
+    def __init__(self, style_base_donné, choix_bdd, table_name):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         self.setFocus()
-        self.db_type = db_type
-        self.dbname = dbname
+        self.style_base_donné = style_base_donné
+        self.choix_bdd = choix_bdd
         self.table_name = table_name
 
         self.action_selectionnee = None
@@ -140,27 +140,32 @@ class GestionTableWindow(QWidget):
 
     def retour(self):
         self.close()
-        from main.page.menu_bdd import Menu_bddWindow
-        self.menu_bdd_window = Menu_bddWindow(select_bdd=self.dbname, db_type=self.db_type)
+        from main.page.choix_bdd import Menu_bddWindow
+        self.menu_bdd_window = Menu_bddWindow(self.style_base_donné, self.choix_bdd)
         self.menu_bdd_window.show()
 
     def afficher_table(self):
         self.close()
-        select_bdd=self.dbname
         from main.page.requete_sql.afficher_table_sql import Afficher_Table_SQL_Window
-        self.gestion_sql_window = Afficher_Table_SQL_Window(select_bdd, [self.combo.currentText()])
-        self.gestion_sql_window.show()
+        self.requete_sql_window = Afficher_Table_SQL_Window(
+            self.style_base_donné,
+            self.choix_bdd,
+            table_name=[self.combo.currentText()]
+            )
+        self.requete_sql_window.show()
 
     def modifier_table_sql(self):
         self.close()
-        select_bdd=self.dbname
         from main.page.requete_sql.modifier_table import Modifier_Table_Window
-        self.requete_sql_window = Modifier_Table_Window(select_bdd, [self.combo.currentText()])
+        self.requete_sql_window = Modifier_Table_Window(self.choix_bdd, [self.combo.currentText()])
         self.requete_sql_window.show()
 
     def afficher_console_sql(self):
         self.close()
-        select_bdd=self.dbname
-        from main.page.differente_bdd.page_sql import SQL_Window
-        self.requete_sql_window = SQL_Window(select_bdd, dbname=self.dbname)
+        from main.page.differente_bdd.requete_sql_sur_table import Afficher_Table_SQL_Window
+        self.requete_sql_window = Afficher_Table_SQL_Window(
+            self.style_base_donné,
+            self.choix_bdd,
+            [self.combo.currentText()]
+        )
         self.requete_sql_window.show()

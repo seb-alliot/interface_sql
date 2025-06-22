@@ -27,15 +27,16 @@ db_configs = {
 }
 
 
-class SQL_Window(QWidget):
-    def __init__(self,style_base_donné, select_bdd):
+class Afficher_Table_SQL_Window(QWidget):
+    def __init__(self,style_base_donné,dbname, table_name):
         super().__init__()
         self.setWindowTitle("Console SQL")
         self.resize(800, 600)
 
         self.style_base_donné = style_base_donné
         self.config = db_configs
-        self.select_bdd = select_bdd
+        self.dbname = dbname
+        self.table_name = table_name
 
         layout = QVBoxLayout()
 
@@ -65,9 +66,8 @@ class SQL_Window(QWidget):
         self.hide()
         from main.utils import Close
         Close(self)
-        from main.page.choix_bdd import Menu_bddWindow
-
-        self.menu_window = Menu_bddWindow(style_base_donné=self.style_base_donné, select_bdd=self.select_bdd)
+        from main.page.gestion_table import GestionTableWindow
+        self.menu_window = GestionTableWindow( self.style_base_donné, self.dbname, self.table_name)
         self.menu_window.show()
         self.close()
 
@@ -91,7 +91,7 @@ class SQL_Window(QWidget):
                 noms_colonnes = [desc[0] for desc in curseur.description]
                 self.afficher_resultat(resultats, noms_colonnes)
                 self.label_info.setText("Requête exécutée avec succès.")
-            else:  #
+            else:  # INSERT, UPDATE, DELETE
                 connexion.commit()
                 self.resultat_table.setRowCount(0)
                 self.resultat_table.setColumnCount(0)

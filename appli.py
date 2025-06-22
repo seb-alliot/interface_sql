@@ -9,7 +9,7 @@ else:
 
 sys.path.insert(0, base_path)
 
-from main.page.select_bdd import ChoixBDDWindow
+from main.page.selection_style_bdd import ChoixBDDWindow
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

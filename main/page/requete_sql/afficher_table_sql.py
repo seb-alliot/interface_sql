@@ -6,11 +6,12 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 # --- Fin de la correction ---
 
-from main.utils.gestion_bdd.connection_db import connect_to_postgresql_database
+from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
+from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 
-from settings import APP_NAME, VERSION, POSTGRES_DB, MAJ_DB_CONFIG, POSTGRESQL_CONFIG
+from settings import APP_NAME, VERSION
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QTableWidget, QTableWidgetItem
 )
@@ -20,14 +21,14 @@ from main.utils.fonction_diverse import Close
 
 
 class Afficher_Table_SQL_Window(QWidget):
-    def __init__(self, db_type, table_name):
-        print(f" donnée transmise : {db_type} - {table_name}")
+    def __init__(self, style_base_donné, choix_bdd,table_name):
+        print(f" donnée transmise : {style_base_donné} - {table_name}")
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
-        self.db_type = db_type
-        self.dbname = db_type
+        self.style_base_donné = style_base_donné
+        self.choix_bdd = choix_bdd
         self.table_name = table_name[0] if isinstance(table_name, list) else table_name
 
         self.setFocus()
@@ -35,7 +36,7 @@ class Afficher_Table_SQL_Window(QWidget):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.title_label = QLabel(f"Affichage de la table {self.table_name} dans la base de données {self.dbname}.")
+        self.title_label = QLabel(f"Affichage de la table {self.table_name} dans la base de données {self.choix_bdd}.")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
         layout.addWidget(self.title_label)
@@ -61,7 +62,7 @@ class Afficher_Table_SQL_Window(QWidget):
         self.afficher_contenu_table()
 
     def afficher_contenu_table(self):
-        config = POSTGRESQL_CONFIG(dbname=self.dbname)
+        config = POSTGRESQL_CONFIG(dbname=self.choix_bdd)
         print("Base de données utilisée :", config["dbname"])
         if not config:
             self.message_label.setText("Aucune base de données sélectionnée.")
@@ -96,7 +97,7 @@ class Afficher_Table_SQL_Window(QWidget):
             self.message_label.setText(f"Erreur lors de l'affichage de la table : {str(e)}")
 
     def afficher_contenu_bdd(self):
-        db_config = POSTGRESQL_CONFIG(dbname=self.dbname)
+        db_config = POSTGRESQL_CONFIG(dbname=self.choix_bdd)
         connection, error = connect_to_postgresql_database(db_config)
         if connection:
             try:
@@ -120,17 +121,7 @@ class Afficher_Table_SQL_Window(QWidget):
         self.hide()
         from main.page.gestion_table import GestionTableWindow
 
-        self.main_window = GestionTableWindow(dbname=self.dbname,db_type=self.db_type, table_name=table_name)
+        self.main_window = GestionTableWindow(self.style_base_donné,self.choix_bdd, table_name=table_name)
         self.main_window.show()
         fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
-
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    fenetre = Afficher_Table_SQL_Window()
-    fenetre.show()
-
-    sys.exit(app.exec())
