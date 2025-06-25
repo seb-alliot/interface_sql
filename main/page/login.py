@@ -9,7 +9,6 @@ from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFI
 from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
-from main.utils.regles_visuelles.transition_connection import TransitionWindow
 from main.page.menu_principal_bdd import Menu_Principal_Window
 from main.utils.fonction_diverse.recharge_env import recharger_env
 
@@ -18,7 +17,7 @@ from settings import (
     VERSION,
 )
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
+    QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
 )
 from PyQt6.QtCore import Qt
 

@@ -25,4 +25,3 @@ DB_CONFIG = MAJ_DB_CONFIG()
 DB_AUTO_CONNECT =  os.getenv('DB_AUTO_CONNECT', 'False').lower() == 'true'
 
 
-

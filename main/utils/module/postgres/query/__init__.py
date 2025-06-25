@@ -1,1 +1,2 @@
 from .query_voir_base import voir_base_postgresql
+from .voir_table import voir_table_postgres

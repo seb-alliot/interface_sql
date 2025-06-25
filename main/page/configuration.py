@@ -3,15 +3,15 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QCheckBox, QApplication
+    QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QCheckBox
 )
 from PyQt6.QtCore import Qt, QTimer
 
 from settings import (
     APP_NAME, VERSION
 )
-from main.utils.module.postgres import POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
-from main.utils.module.maria_db import MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
+from main.utils.module.postgres import POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT, postgresql_auto_connect
+from main.utils.module.maria_db import MARIA_DB_CONFIG, MARIA_AUTO_CONNECT, maria_auto_connect
 
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.save_donne.config_bdd import save_bdd_config
@@ -50,10 +50,10 @@ class ConfigurationWindow(QWidget):
         if style_base_donné in ("PostgreSQL", "MariaDB"):
             self.checkbox_auto_connect = QCheckBox("Connexion automatique")
             if style_base_donné == "PostgreSQL":
-                self.checkbox_auto_connect.setChecked(POSTGRESQL_AUTO_CONNECT)
+                self.checkbox_auto_connect.setChecked(postgresql_auto_connect())
                 config = POSTGRESQL_CONFIG()
             else:  # MariaDB
-                self.checkbox_auto_connect.setChecked(MARIA_AUTO_CONNECT)
+                self.checkbox_auto_connect.setChecked(maria_auto_connect())
                 config = MARIA_DB_CONFIG()
 
             main_layout.addWidget(self.checkbox_auto_connect, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -117,13 +117,10 @@ class ConfigurationWindow(QWidget):
     def reload_config(self):
         load_dotenv(dotenv_path=dotenv_path, override=True)
         if self.style_base_donné == "PostgreSQL":
-            global POSTGRESQL_AUTO_CONNECT
-            POSTGRESQL_AUTO_CONNECT = os.getenv('POSTGRESQL_AUTO_CONNECT', 'False').lower() == 'true'
-            self.checkbox_auto_connect.setChecked(POSTGRESQL_AUTO_CONNECT)
+            self.checkbox_auto_connect.setChecked(postgresql_auto_connect())
         elif self.style_base_donné == "MariaDB":
-            global MARIA_AUTO_CONNECT
-            MARIA_AUTO_CONNECT = os.getenv('MARIA_AUTO_CONNECT', 'False').lower() == 'true'
-            self.checkbox_auto_connect.setChecked(MARIA_AUTO_CONNECT)
+            self.checkbox_auto_connect.setChecked(maria_auto_connect())
+
 
     def bouton_validation(self):
         dbname = self.inputs.get("bdd_name").text().strip()

@@ -76,8 +76,10 @@ class Afficher_Table_SQL_Window(QWidget):
         if not requete:
             self.label_info.setText("Aucune requête à exécuter.")
             return
-
-        connexion, erreur = connect_to_postgresql_database()
+        if self.style_base_donné == "PostgreSQL":
+            connexion, erreur = connect_to_postgresql_database()
+        elif self.style_base_donné == "MariaDB":
+            connexion, erreur = connect_to_maria_database()
         if not connexion:
             self.label_info.setText(f"Erreur de connexion : {erreur}")
             return

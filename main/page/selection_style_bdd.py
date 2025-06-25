@@ -5,6 +5,8 @@ from main.page.configuration import ConfigurationWindow
 from main.page.login import LoginWindow
 from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
 from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
+from main.utils.module.mongo_db import connect_to_mongo, MONGO_DB_CONFIG, MONGO_AUTO_CONNECT
+
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.fonction_diverse.recharge_env import recharger_env
 from settings import VERSION, APP_NAME
@@ -20,6 +22,11 @@ db_configs = {
         "config_bdd": MARIA_DB_CONFIG,
         "connector": connect_to_maria_database,
         "auto_connect": MARIA_AUTO_CONNECT
+    },
+    "MongoDB": {
+        "config_bdd": MONGO_DB_CONFIG,
+        "connector": connect_to_mongo,
+        "auto_connect": MONGO_AUTO_CONNECT,
     }
 }
 
@@ -37,7 +44,7 @@ class ChoixBDDWindow(QWidget):
         layout.addWidget(self.label)
 
         self.combo = QComboBox()
-        self.combo.addItems(["PostgreSQL", "MariaDB", "SQLite"])
+        self.combo.addItems(["PostgreSQL", "MariaDB","MongoDB", "SQLite"])
         layout.addWidget(self.combo)
 
         self.button = self._create_button("Continuer", self.tester_connection)
@@ -62,6 +69,7 @@ class ChoixBDDWindow(QWidget):
     def tester_connection(self):
         recharger_env()
         choix = self.combo.currentText()
+        error = None
 
         if choix in db_configs:
             config_bdd = db_configs[choix]["config_bdd"]
@@ -71,22 +79,32 @@ class ChoixBDDWindow(QWidget):
             db_config = config_bdd()
 
             if auto_connect:
-                connection, error = connect_bdd(db_config)
-                if connection:
-                    self._set_label("Connexion réussie!", "green")
-                    connection.close()
-                    self.ouvrir_fenetre(Menu_Principal_Window)
-                else:
-                    self._set_label(f"Connexion échouée : {error}", "red")
-                    self._fade_to(ConfigurationWindow)
-            else:
-                self._set_label("Veuillez entrer vos identifiants de connexion :", "orange")
-                self.ouvrir_fenetre(LoginWindow)
+                try:
+                    connection, error = connect_bdd(db_config)
 
+                    if connection:
+                        self._set_label("Connexion réussie!", "green")
+                        if choix == "MongoDB":
+                            self.connection_mongo = connection
+                        else:
+                            connection.close()
+                        self.ouvrir_fenetre(Menu_Principal_Window)
+                    else:
+                        self._set_label(f"Erreur: {error}", "red")
+
+                except Exception as e:
+                    self._set_label(f"Erreur de connexion : {str(e)}", "red")
+            else:
+                if connect_bdd:
+                    self._set_label("Veuillez entrer vos identifiants de connexion :", "orange")
+                    self.ouvrir_fenetre(LoginWindow)
+                else:
+                    self._set_label("Veuillez paramétrer votre base de données.", "red")
+                    self.ouvrir_fenetre(ConfigurationWindow)
         elif choix == "SQLite":
-            self._set_label("SQLite n'est pas encore implémenté.", "red")
-        else:
-            self._set_label("Type de base de donnée non reconnu.", "red")
+            self._set_label("SQLite n'est pas encore pris en charge.", "red")
+
+
 
     def _set_label(self, text, color):
         self.label.setText(text)
@@ -94,14 +112,15 @@ class ChoixBDDWindow(QWidget):
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def ouvrir_fenetre(self, fenetre_a_ouvrir):
-        self.close()
         style_base_donné = self.combo.currentText()
-        self.next_window = fenetre_a_ouvrir(style_base_donné)
-        print("_" * 40)
-        print(f"ChoixBDDWindow")
-        print(f"style_base_donné selection du langue de la base, postgres, maria etc : {style_base_donné}")
-        fade_widget(self.next_window, duration=500, fade_in=True)
+        self.next_window = fenetre_a_ouvrir(
+            style_base_donné,
+            self.connection_mongo if hasattr(self, 'connection_mongo') else None,
+        )
         self.next_window.show()
+        fade_widget(self.next_window, duration=500, fade_in=True)
+        self.close()  # Fermer la fenêtre actuelle **après** avoir affiché la suivante
+
 
     def _fade_to(self, fenetre_a_ouvrir):
         fade_widget(self, duration=500, fade_in=False,
