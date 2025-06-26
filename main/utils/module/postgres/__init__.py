@@ -7,4 +7,5 @@ from .config import (
 from .query import (
     voir_base_postgresql,
     voir_table_postgres,
+    voir_contenu_table_postgres,
 )

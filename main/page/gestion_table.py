@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from settings import APP_NAME, VERSION
-from main.utils.gestion_bdd.affichage_table import recuperer_tables
 
 
 class GestionTableWindow(QWidget):
@@ -35,7 +34,7 @@ class GestionTableWindow(QWidget):
         }
     """
 
-    def __init__(self, style_base_donné,connection_mongo,choix_bdd, table_name):
+    def __init__(self, style_base_donné,connection,choix_bdd, table_name):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
@@ -43,7 +42,7 @@ class GestionTableWindow(QWidget):
         self.style_base_donné = style_base_donné
         self.choix_bdd = choix_bdd
         self.table_name = table_name
-        self.connection_mongo = connection_mongo
+        self.connection = connection
 
         self.action_selectionnee = None
 
@@ -145,7 +144,7 @@ class GestionTableWindow(QWidget):
         from main.page.choix_bdd import Menu_bddWindow
         self.menu_bdd_window = Menu_bddWindow(
             self.style_base_donné,
-            None if self.style_base_donné != "MongoDB" else self.connection_mongo,
+            self.connection,
             self.choix_bdd,
             )
 
@@ -154,20 +153,12 @@ class GestionTableWindow(QWidget):
     def afficher_table(self):
         self.close()
         from main.page.requete_sql.afficher_table_sql import Afficher_Table_SQL_Window
-        if  self.style_base_donné == "MongoDB":
-            self.requete_sql_window = Afficher_Table_SQL_Window(
-                self.style_base_donné,
-                self.connection_mongo,
-                self.choix_bdd,
-                table_name=[self.combo.currentText()],
-            )
-        else:
-            self.requete_sql_window = Afficher_Table_SQL_Window(
-                self.style_base_donné,
-                None,
-                self.choix_bdd,
-                table_name=[self.combo.currentText()]
-                )
+        self.requete_sql_window = Afficher_Table_SQL_Window(
+            self.style_base_donné,
+            self.connection,
+            self.choix_bdd,
+            table_name=[self.combo.currentText()],
+        )
         self.requete_sql_window.show()
 
     def modifier_table_sql(self):

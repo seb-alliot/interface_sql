@@ -1,4 +1,3 @@
-def voir_table_maria(table_name):
-    # On enlève les backticks dans le nom de table pour éviter les erreurs SQL ou injections
-    safe_table_name = table_name.replace("`", "")
-    return f"SELECT * FROM `{safe_table_name}`;"
+def voir_table_maria(nom_base):
+    # retourne une requête pour lister les tables d’une base spécifique
+    return f"SHOW TABLES FROM `{nom_base}`;"

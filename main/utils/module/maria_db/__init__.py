@@ -7,4 +7,5 @@ from .config import (
 from .query import (
     voir_base_maria,
     voir_table_maria,
+    voir_contenu_maria,
 )

@@ -81,13 +81,9 @@ class ChoixBDDWindow(QWidget):
             if auto_connect:
                 try:
                     connection, error = connect_bdd(db_config)
-
                     if connection:
-                        self._set_label("Connexion réussie!", "green")
-                        if choix == "MongoDB":
-                            self.connection_mongo = connection
-                        else:
-                            connection.close()
+                        self._set_label(f"Connexion réussie à {choix} !", "green")
+                        self.connection = connection
                         self.ouvrir_fenetre(Menu_Principal_Window)
                     else:
                         self._set_label(f"Erreur: {error}", "red")
@@ -115,7 +111,7 @@ class ChoixBDDWindow(QWidget):
         style_base_donné = self.combo.currentText()
         self.next_window = fenetre_a_ouvrir(
             style_base_donné,
-            self.connection_mongo if hasattr(self, 'connection_mongo') else None,
+            self.connection,
         )
         self.next_window.show()
         fade_widget(self.next_window, duration=500, fade_in=True)
