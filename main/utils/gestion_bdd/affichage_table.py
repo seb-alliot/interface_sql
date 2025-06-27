@@ -1,34 +1,32 @@
-def recuperer_tables(style_base_donné, choix_bdd):
-    from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG
-    from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG
-    from main.utils.module.mongo_db import connect_to_mongo, MONGO_DB_CONFIG
-    from main.utils.fonction_diverse import Close
+def recuperer_tables(style_base_donné,connection, choix_bdd):
+    from main.utils.module.maria_db import  voir_table_maria
+    from main.utils.module.postgres import voir_table_postgres
+    from main.utils.module.mongo_db import voir_collections_mongo
+    connection = connection
 
     if style_base_donné == "PostgreSQL":
-        db_config = POSTGRESQL_CONFIG(dbname=choix_bdd)
-        connection, error = connect_to_postgresql_database(db_config)
         if connection:
             try:
                 cursor = connection.cursor()
-                cursor.execute("SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public';")
-                return [row[0] for row in cursor.fetchall()]
-            finally:
-                Close(connection, cursor)
+                cursor.execute(voir_table_postgres())
+                table_names= [row[0] for row in cursor.fetchall()]
+                return table_names
+            except Exception as e:
+                return [f"Erreur lors de la récupération des tables : {str(e)}"]
 
     elif style_base_donné == "MariaDB":
-        db_config = MARIA_DB_CONFIG(dbname=choix_bdd)
-        connection, error = connect_to_maria_database(db_config)
         if connection:
             try:
                 cursor = connection.cursor()
-                cursor.execute(f"SHOW TABLES FROM `{choix_bdd}`;")
+                cursor.execute(voir_table_maria(choix_bdd))
+                table_names = cursor.fetchall()
                 return [row[0] for row in cursor.fetchall()]
-            finally:
-                Close(connection, cursor)
+            except Exception as e:
+                return [f"Erreur lors de la récupération des tables : {str(e)}"]
 
     elif style_base_donné == "MongoDB":
-        connection, error = connect_to_mongo(MONGO_DB_CONFIG())
         if connection:
-            from main.utils.module.mongo_db.query.query_voir_base import voir_collections_mongo
-            return voir_collections_mongo()
+            table_names = voir_collections_mongo(connection, choix_bdd)
+            return table_names
+
     return []

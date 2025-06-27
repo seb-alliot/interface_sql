@@ -82,7 +82,6 @@ class Afficher_Table_SQL_Window(QWidget):
     def afficher_contenu_table(self):
         choix = self.style_base_donné
 
-        # Cas MongoDB
         if choix == "MongoDB":
             try:
                 if self.connection is None:
@@ -111,10 +110,8 @@ class Afficher_Table_SQL_Window(QWidget):
                 self.message_label.setText(f"Erreur MongoDB : {e}")
             return
 
-        # Cas PostgreSQL / MariaDB
         if choix in db_configs:
             try:
-
                 connection, erreur = self.connection, None
                 query_table = db_configs[choix]["query_table"]
 
@@ -153,7 +150,10 @@ class Afficher_Table_SQL_Window(QWidget):
             self.style_base_donné,
             self.connection,
             self.choix_bdd,
-            table_name=recuperer_tables(self.style_base_donné, self.choix_bdd)
+            table_name=recuperer_tables(
+                self.style_base_donné,
+                self.connection,
+                self.choix_bdd)
         )
 
         self.main_window.show()

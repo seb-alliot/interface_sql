@@ -31,11 +31,13 @@ db_configs = {
 }
 
 class ChoixBDDWindow(QWidget):
-    def __init__(self, style_base_donné=None):
+    def __init__(self,connection=None, style_base_donné=None):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         self.style_base_donné = style_base_donné
+        self.connection = connection
+        print(f"Connection choix bdd : {self.connection}")
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)

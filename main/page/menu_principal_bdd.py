@@ -93,8 +93,12 @@ class Menu_Principal_Window(QWidget):
 
     def retour(self):
         self.hide()
+        if self.connection:
+            self.connection.close()
         from main.page.selection_style_bdd import ChoixBDDWindow
-        self.main_window = ChoixBDDWindow()
+        self.main_window = ChoixBDDWindow(
+            connection=self.connection,
+        )
         self.main_window.show()
         from main.utils.regles_visuelles.fad_widjet import fade_widget
         fade_widget(self.main_window, duration=500, fade_in=True)
@@ -105,12 +109,18 @@ class Menu_Principal_Window(QWidget):
             return ["Base de données non supportée"]
 
         config = db_configs[self.style_base_donné]
+        connection = self.connection
         try:
-            connection = self.connection
+            if self.style_base_donné == "MongoDB":
+                client = self.connection
+                return client.list_database_names()
+            elif not connection:
+                return ["Aucune connexion active"]
+            else:
 
-            cursor = connection.cursor()
-            cursor.execute(config["query"]())
-            return [bdd[0] for bdd in cursor.fetchall()]
+                cursor = self.connection.cursor()
+                cursor.execute(config["query"]())
+                return [bdd[0] for bdd in cursor.fetchall()]
 
         except Exception as e:
             return [f"Erreur : {str(e)}"]

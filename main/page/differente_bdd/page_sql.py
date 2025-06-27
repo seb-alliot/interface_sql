@@ -28,14 +28,15 @@ db_configs = {
 
 
 class SQL_Window(QWidget):
-    def __init__(self,style_base_donné, select_bdd):
+    def __init__(self, style_base_donné, connection, choix_bdd):
         super().__init__()
         self.setWindowTitle("Console SQL")
         self.resize(800, 600)
 
         self.style_base_donné = style_base_donné
         self.config = db_configs
-        self.select_bdd = select_bdd
+        self.choix_bdd = choix_bdd
+        self.connection = connection
 
         layout = QVBoxLayout()
 
@@ -63,11 +64,12 @@ class SQL_Window(QWidget):
 
     def retour_menu(self):
         self.hide()
-        from main.utils import Close
-        Close(self)
         from main.page.choix_bdd import Menu_bddWindow
-
-        self.menu_window = Menu_bddWindow(style_base_donné=self.style_base_donné, select_bdd=self.select_bdd)
+        self.menu_window = Menu_bddWindow(
+            style_base_donné=self.style_base_donné,
+            connection=self.connection,
+            choix_bdd=self.choix_bdd
+            )
         self.menu_window.show()
         self.close()
 

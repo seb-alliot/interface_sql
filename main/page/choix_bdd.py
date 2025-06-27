@@ -6,9 +6,7 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
 from settings import APP_NAME, VERSION
-from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, voir_table_maria
-from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, voir_base_postgresql,voir_table_postgres
-from main.utils.module.mongo_db import connect_to_mongo, MONGO_DB_CONFIG, voir_collections_mongo
+from main.utils.gestion_bdd.affichage_table import recuperer_tables
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 
 from PyQt6.QtWidgets import (
@@ -66,38 +64,10 @@ class Menu_bddWindow(QWidget):
         return bouton
 
     def afficher_contenu_bdd(self):
-        connection = self.connection
 
         try:
-            if self.style_base_donné == "PostgreSQL":
-                if connection:
-                    cursor = self.connection.cursor()
-                    cursor.execute(voir_table_postgres())
-                    table_names = [row[0] for row in cursor.fetchall()]
-                    self.ouvrir_gestion_table(table_names)
-                else:
-                    self.message_label.setText(f"Erreur de connexion PostgreSQL")
-
-            elif self.style_base_donné == "MariaDB":
-                if connection:
-                    cursor = self.connection.cursor()
-                    cursor.execute(voir_table_maria(self.choix_bdd))
-                    table_names = [row[0] for row in cursor.fetchall()]
-                    self.ouvrir_gestion_table(table_names)
-                else:
-                    self.message_label.setText(f"Erreur de connexion MariaDB ")
-
-            elif self.style_base_donné == "MongoDB":
-                if self.connection:
-                    try:
-                        table_names = voir_collections_mongo(self.connection, self.choix_bdd)
-                        self.ouvrir_gestion_table(table_names)
-                    except Exception as e:
-                        self.message_label.setText(f"Erreur MongoDB : {e}")
-                else:
-                    self.message_label.setText("Connexion MongoDB non disponible.")
-            else:
-                self.message_label.setText(f"Type de base non supporté : {self.style_base_donné}")
+            table_name = recuperer_tables(self.style_base_donné,self.connection, self.choix_bdd)
+            self.ouvrir_gestion_table(table_name)
 
         except Exception as e:
             self.message_label.setText(f"Erreur lors de la récupération des tables : {e}")
@@ -109,7 +79,11 @@ class Menu_bddWindow(QWidget):
     def faire_une_requete_sql(self):
         self.hide()
         from main.page.differente_bdd.page_sql import SQL_Window
-        self.sql_window = SQL_Window(self.style_base_donné, self.choix_bdd)
+        self.sql_window = SQL_Window(
+            self.style_base_donné,
+            self.connection,
+            self.choix_bdd
+            )
         self.sql_window.show()
         fade_widget(self.sql_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
