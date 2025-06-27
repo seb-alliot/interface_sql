@@ -4,4 +4,5 @@ from .regle_position import (
 )
 from .fonction_diverse import (
     Close,
+    fermer_et_transfere,
 )

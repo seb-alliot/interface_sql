@@ -159,3 +159,6 @@ class Afficher_Table_SQL_Window(QWidget):
         self.main_window.show()
         fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
+
+    def closeEvent(self, event):
+        Close(self, event)

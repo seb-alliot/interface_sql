@@ -10,6 +10,7 @@ from main.utils.module.mongo_db import connect_to_mongo, MONGO_DB_CONFIG, MONGO_
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.fonction_diverse.recharge_env import recharger_env
 from settings import VERSION, APP_NAME
+from main.utils import Close, fermer_et_transfere
 
 # Dictionnaire factorisé pour les configs de base de données
 db_configs = {
@@ -117,7 +118,7 @@ class ChoixBDDWindow(QWidget):
         )
         self.next_window.show()
         fade_widget(self.next_window, duration=500, fade_in=True)
-        self.close()  # Fermer la fenêtre actuelle **après** avoir affiché la suivante
+        fermer_et_transfere(self)
 
 
     def _fade_to(self, fenetre_a_ouvrir):

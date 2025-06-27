@@ -8,6 +8,7 @@ if str(project_root) not in sys.path:
 from settings import APP_NAME, VERSION
 from main.utils.gestion_bdd.affichage_table import recuperer_tables
 from main.utils.regles_visuelles.fad_widjet import fade_widget
+from main.utils import Close
 
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton, QHBoxLayout
@@ -112,3 +113,6 @@ class Menu_bddWindow(QWidget):
         self.gestion_table_window.show()
         fade_widget(self.gestion_table_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
+
+    def closeEvent(self, event):
+        Close(self, event)

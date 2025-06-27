@@ -171,8 +171,14 @@ class Menu_Principal_Window(QWidget):
     def configuration_bdd(self):
         self.hide()
         from main.page.configuration import ConfigurationWindow
-        self.main_window = ConfigurationWindow(self.style_base_donné)
+        self.main_window = ConfigurationWindow(
+            self.style_base_donné,
+            connection=self.connection if self.connection else None,
+            )
         self.main_window.show()
         from main.utils.regles_visuelles.fad_widjet import fade_widget
         fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
+
+    def closeEvent(self, event):
+        Close(self, event)

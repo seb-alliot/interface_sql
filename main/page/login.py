@@ -11,6 +11,8 @@ from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.page.menu_principal_bdd import Menu_Principal_Window
 from main.utils.fonction_diverse.recharge_env import recharger_env
+from main.utils import Close
+
 
 from settings import (
     APP_NAME,
@@ -130,3 +132,7 @@ class LoginWindow(QWidget):
         self.main_window = Menu_Principal_Window(self.style_base_donné)
         fade_widget(self.main_window, duration=300, fade_in=True)
         self.main_window.show()
+
+
+    def closeEvent(self, event):
+        Close(self, event)

@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 from settings import APP_NAME, VERSION
+from main.utils import Close, fermer_et_transfere
 
 
 class GestionTableWindow(QWidget):
@@ -140,7 +141,7 @@ class GestionTableWindow(QWidget):
             self.afficher_console_sql()
 
     def retour(self):
-        self.close()
+        fermer_et_transfere(self)
         from main.page.choix_bdd import Menu_bddWindow
         self.menu_bdd_window = Menu_bddWindow(
             self.style_base_donné,
@@ -151,7 +152,7 @@ class GestionTableWindow(QWidget):
         self.menu_bdd_window.show()
 
     def afficher_table(self):
-        self.close()
+        fermer_et_transfere(self)
         from main.page.requete_sql.afficher_table_sql import Afficher_Table_SQL_Window
         self.requete_sql_window = Afficher_Table_SQL_Window(
             self.style_base_donné,
@@ -162,17 +163,21 @@ class GestionTableWindow(QWidget):
         self.requete_sql_window.show()
 
     def modifier_table_sql(self):
-        self.close()
+        fermer_et_transfere(self)
         from main.page.requete_sql.modifier_table import Modifier_Table_Window
         self.requete_sql_window = Modifier_Table_Window(self.choix_bdd, [self.combo.currentText()])
         self.requete_sql_window.show()
 
     def afficher_console_sql(self):
-        self.close()
+        fermer_et_transfere(self)
         from main.page.differente_bdd.requete_sql_sur_table import Afficher_Table_SQL_Window
         self.requete_sql_window = Afficher_Table_SQL_Window(
             self.style_base_donné,
+            self.connection,
             self.choix_bdd,
             [self.combo.currentText()]
         )
         self.requete_sql_window.show()
+
+    def closeEvent(self, event):
+        Close(self, event)

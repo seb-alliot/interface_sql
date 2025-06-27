@@ -10,8 +10,9 @@ from main.utils.module.maria_db import connect_to_maria_database
 from main.utils.module.postgres import connect_to_postgresql_database
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
-from main.page.menu_principal_bdd import MenuWindow
+from main.page.menu_principal_bdd import Menu_Principal_Window
 from main.utils.fonction_diverse.recharge_env import recharger_env
+from main.utils import Close
 
 from settings import APP_NAME, VERSION
 from PyQt6.QtWidgets import (
@@ -22,23 +23,18 @@ from PyQt6.QtCore import Qt
 
 
 class Modifier_Table_Window(QWidget):
-    def __init__(self, style_base_donné, table_name):
+    def __init__(self, style_base_donné, connection, table_name):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
 
         self.style_base_donné = style_base_donné
+        self.connection = connection
         self.table_name = table_name
         self.setFocus()
 
-        print("Table sélectionnée :", self.table_name)
 
 
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    fenetre = Modifier_Table_Window()
-    fenetre.show()
-
-    sys.exit(app.exec())
+    def closeEvent(self, event):
+        Close(self, event)
