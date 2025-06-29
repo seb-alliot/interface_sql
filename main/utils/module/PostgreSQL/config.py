@@ -2,7 +2,7 @@ import os
 
 def config(user=None, password=None, dbname=None):
     return {
-        "dbname": dbname if dbname is not None else os.getenv("POSTGRESQL_NAME"),
+        "dbname": dbname if dbname is not None else os.getenv("POSTGRESQL_BDD_NAME"),
         "user": user if user is not None else os.getenv("POSTGRESQL_USER"),
         "password": password if password is not None else os.getenv("POSTGRESQL_PASSWORD"),
         "host": os.getenv("POSTGRESQL_HOST"),

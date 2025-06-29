@@ -59,7 +59,7 @@ class ConfigurationWindow(QWidget):
 
         for nom_input, placeholder, echo, valeur_defaut in champs:
             champ = self.creer_input(placeholder, echo)
-            if valeur_defaut:
+            if valeur_defaut and valeur_defaut.lower() != "default":
                 champ.setText(valeur_defaut)
             champ.setObjectName(nom_input)
             self.inputs[nom_input] = champ

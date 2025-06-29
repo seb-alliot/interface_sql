@@ -13,3 +13,5 @@ En dev → chemins relatifs basés sur __file__ (le fichier .py)
 En exe → chemins basés sur sys.executable (l’emplacement de l’exe)
 
 
+# import dynamique vie le systpath avec importlib qui permet de creer des import via des nom de fichier en str sans le .py
+voir le fichier dans main\utils\fonction_diverse\import_modul.py pour plus de details
