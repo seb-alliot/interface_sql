@@ -1,14 +1,9 @@
-from pymongo import MongoClient
-from main.utils.module.mongo_db.connection import connect_to_mongo
-
-
-def voir_collections_mongo(connection, choix_bdd):
+def voir_table(connection, choix_bdd):
     """
-    Retourne la liste des collections dans une base MongoDB.
+    Retourne la liste des collections (équivalent des tables) dans une base MongoDB donnée.
     """
     if not connection or not choix_bdd:
         return []
-
     try:
         db = connection[choix_bdd]
         return db.list_collection_names()

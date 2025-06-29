@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+
 # Gestion du chemin
 project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
@@ -9,12 +10,12 @@ from settings import APP_NAME, VERSION
 from main.utils.gestion_bdd.affichage_table import recuperer_tables
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils import Close
+from main.utils.fonction_diverse import importer_module_bdd
 
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton, QHBoxLayout
 )
 from PyQt6.QtCore import Qt, QTimer
-
 
 
 class Menu_bddWindow(QWidget):
@@ -25,6 +26,8 @@ class Menu_bddWindow(QWidget):
         self.style_base_donné = style_base_donné
         self.choix_bdd = choix_bdd
         self.connection = connection
+        # Import dynamique du module selon style_base_donné
+        self.module = importer_module_bdd(self.style_base_donné)
 
         self.setFocus()
         content_layout = QVBoxLayout()
@@ -65,11 +68,11 @@ class Menu_bddWindow(QWidget):
         return bouton
 
     def afficher_contenu_bdd(self):
-
         try:
-            table_name = recuperer_tables(self.style_base_donné,self.connection, self.choix_bdd)
+            table_name = recuperer_tables(self.style_base_donné, self.connection, self.choix_bdd)
+            print(f" donné de afficher_contenu_bdd self.style_base_donné : {self.style_base_donné},")
+            print(f"table_name : {table_name}, connection : {self.connection}, choix_bdd : {self.choix_bdd}")
             self.ouvrir_gestion_table(table_name)
-
         except Exception as e:
             self.message_label.setText(f"Erreur lors de la récupération des tables : {e}")
             print(f"Erreur globale : {e}")
@@ -83,8 +86,8 @@ class Menu_bddWindow(QWidget):
         self.sql_window = SQL_Window(
             self.style_base_donné,
             self.connection,
-            self.choix_bdd
-            )
+            self.choix_bdd,
+        )
         self.sql_window.show()
         fade_widget(self.sql_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
@@ -95,8 +98,8 @@ class Menu_bddWindow(QWidget):
         self.main_window = Menu_Principal_Window(
             self.style_base_donné,
             self.connection,
-            self.choix_bdd
-            )
+            choix_bdd=self.module.import_query_module("return_base") if self.style_base_donné == "MongoDB" else self.choix_bdd,
+        )
         self.main_window.show()
         fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)

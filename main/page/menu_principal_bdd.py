@@ -9,29 +9,9 @@ if str(project_root) not in sys.path:
 from main.utils.fonction_diverse.recharge_env import recharger_env
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton
 from PyQt6.QtCore import Qt, QTimer
-from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, voir_base_maria
-from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, voir_base_postgresql
-from main.utils.module.mongo_db import voir_collections_mongo
+from main.utils.fonction_diverse import importer_module_bdd
 from main.utils import Close
 
-# Dictionnaire factorisé de la configuration des bases de données
-db_configs = {
-    "PostgreSQL": {
-        "config_bdd": POSTGRESQL_CONFIG,
-        "connecteur": connect_to_postgresql_database,
-        "query": voir_base_postgresql,
-    },
-    "MariaDB": {
-        "config_bdd": MARIA_DB_CONFIG,
-        "connecteur": connect_to_maria_database,
-        "query": voir_base_maria
-    },
-    "MongoDB": {
-        "config_bdd": None,
-        "connecteur": None,
-        "query": voir_collections_mongo,
-    }
-}
 
 class Menu_Principal_Window(QWidget):
     def __init__(self, style_base_donné, connection, choix_bdd=None):
@@ -41,6 +21,7 @@ class Menu_Principal_Window(QWidget):
         self.setFocus()
         self.style_base_donné = style_base_donné
         self.connection = connection
+        self.module = importer_module_bdd(self.style_base_donné)
         print(f"Connection menu principal : {self.connection}")
         self.choix_bdd = choix_bdd
 
@@ -93,68 +74,71 @@ class Menu_Principal_Window(QWidget):
 
     def retour(self):
         self.hide()
-        if self.connection:
-            self.connection.close()
+        connection = self.connection[0]
+        if connection:
+            connection.close()
+            print("Connexion fermée avec succès.")
         from main.page.selection_style_bdd import ChoixBDDWindow
-        self.main_window = ChoixBDDWindow(
-            connection=self.connection,
-        )
+        self.main_window = ChoixBDDWindow(self.connection)
         self.main_window.show()
         from main.utils.regles_visuelles.fad_widjet import fade_widget
         fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
 
     def list_bdd(self):
-        if self.style_base_donné not in db_configs:
-            return ["Base de données non supportée"]
+        if not self.connection:
+            return ["Aucune connexion active"]
 
-        config = db_configs[self.style_base_donné]
-        connection = self.connection
+        if self.style_base_donné == "MongoDB":
+            try:
+                query_module = self.module.import_query_module("voir_base")
+                return query_module.voir_base(self.connection[0])
+            except Exception as e:
+                return [f"Erreur MongoDB : {str(e)}"]
+
+        connection = self.connection[0]
+        if not connection:
+            return ["Connexion invalide"]
+        cursor = connection.cursor()
+
         try:
-            if self.style_base_donné == "MongoDB":
-                client = self.connection
-                return client.list_database_names()
-            elif not connection:
-                return ["Aucune connexion active"]
-            else:
-
-                cursor = self.connection.cursor()
-                cursor.execute(config["query"]())
+            query_module = self.module.import_query_module("voir_base")
+            if query_module and hasattr(query_module, "voir_base"):
+                cursor.execute(query_module.voir_base())
                 return [bdd[0] for bdd in cursor.fetchall()]
-
+            else:
+                return ["Module query 'voir_base' non disponible"]
         except Exception as e:
-            return [f"Erreur : {str(e)}"]
+            return [f"Erreur SQL : {str(e)}"]
+
 
     def connection_bdd(self):
         recharger_env()
-        connection = self.connection
+        choix_bdd = self.choix_bdd_combo.currentText()
         nouvelle_connection = None
-
-        if not connection:
+        if not self.connection:
             self.label_bdd.setText("Aucune connexion active")
             return
-        choix_bdd = self.choix_bdd_combo.currentText()
-        if self.style_base_donné == "PostgreSQL":
-            nouvelle_connection = connect_to_postgresql_database(POSTGRESQL_CONFIG(dbname=choix_bdd))[0]
-        elif self.style_base_donné == "MariaDB":
-            nouvelle_connection = connect_to_maria_database(MARIA_DB_CONFIG(dbname=choix_bdd))[0]
-        elif choix_bdd == "MongoDB":
-            connection = self.connection
-        self.connection = nouvelle_connection if nouvelle_connection else connection
 
-        self.retour_menu_bdd()
+        try:
+            if self.style_base_donné == "MongoDB":
+                nouvelle_connection = self.connection
+            else:
+                # Récupérer config avec la base choisie
+                db_config = self.module.config(dbname=choix_bdd)
+                # Connect retourne juste l'objet connection (pas de tuple)
+                nouvelle_connection = self.module.connect(db_config)
+                if not nouvelle_connection:
+                    self.label_bdd.setText("Erreur de connexion (connection vide)")
+                    return
 
-    def afficher_collections_mongo(self):
-        if self.style_base_donné == "MongoDB":
-            nom_bdd = self.choix_bdd_combo.currentText()
-            collections = voir_collections_mongo(nom_bdd)
-            if not collections:
-                self.label_bdd.setText(f"Aucune collection trouvée dans '{nom_bdd}'")
-                return
+            self.connection = nouvelle_connection
 
-            self.label_bdd.setText(f"Collections dans '{nom_bdd}': {', '.join(collections)}")
+            self.menu_bdd()
+        except Exception as e:
+            self.label_bdd.setText(f"Erreur de connexion : {str(e)}")
 
-    def retour_menu_bdd(self):
+    def menu_bdd(self):
         self.hide()
         from main.page.choix_bdd import Menu_bddWindow
         self.main_window = Menu_bddWindow(
@@ -162,7 +146,6 @@ class Menu_Principal_Window(QWidget):
             connection=self.connection,
             choix_bdd=self.choix_bdd_combo.currentText(),
         )
-
         self.main_window.show()
         from main.utils.regles_visuelles.fad_widjet import fade_widget
         fade_widget(self.main_window, duration=500, fade_in=True)
@@ -173,8 +156,8 @@ class Menu_Principal_Window(QWidget):
         from main.page.configuration import ConfigurationWindow
         self.main_window = ConfigurationWindow(
             self.style_base_donné,
-            connection=self.connection if self.connection else None,
-            )
+            connection=self.connection,
+        )
         self.main_window.show()
         from main.utils.regles_visuelles.fad_widjet import fade_widget
         fade_widget(self.main_window, duration=500, fade_in=True)

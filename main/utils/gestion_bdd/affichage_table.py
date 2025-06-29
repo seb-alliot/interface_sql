@@ -1,32 +1,43 @@
-def recuperer_tables(style_base_donné,connection, choix_bdd):
-    from main.utils.module.maria_db import  voir_table_maria
-    from main.utils.module.postgres import voir_table_postgres
-    from main.utils.module.mongo_db import voir_collections_mongo
-    connection = connection
+from main.utils.fonction_diverse import importer_module_bdd
 
-    if style_base_donné == "PostgreSQL":
-        if connection:
-            try:
-                cursor = connection.cursor()
-                cursor.execute(voir_table_postgres())
-                table_names= [row[0] for row in cursor.fetchall()]
+def recuperer_tables(style_base_donné, connection, choix_bdd):
+    module = importer_module_bdd(style_base_donné)
+    if not connection:
+        return ["Aucune connexion active"]
+
+    # Pour MongoDB, pas de cursor, on appelle direct la fonction spécifique
+    if style_base_donné == "MongoDB":
+        try:
+            query_module = module.import_query_module("voir_table")
+            table_names = query_module.voir_table(connection, choix_bdd)
+            if not table_names:
+                return f"Aucune table trouvé"
+            else:# liste des collections
                 return table_names
-            except Exception as e:
-                return [f"Erreur lors de la récupération des tables : {str(e)}"]
+        except Exception as e:
+            return [f"Erreur lors de la récupération des collections : {str(e)}"]
 
+    # Pour SQL (PostgreSQL, MariaDB), on crée un cursor et exécute la requête
+    connection = connection[0]
+    if not connection:
+        return ["Connexion invalide"]
+
+    cursor = connection.cursor()
+    query_module = module.import_query_module("voir_table")
+
+    query = None
+    if style_base_donné == "PostgreSQL":
+        query = query_module.voir_table()
     elif style_base_donné == "MariaDB":
-        if connection:
-            try:
-                cursor = connection.cursor()
-                cursor.execute(voir_table_maria(choix_bdd))
-                table_names = cursor.fetchall()
-                return [row[0] for row in cursor.fetchall()]
-            except Exception as e:
-                return [f"Erreur lors de la récupération des tables : {str(e)}"]
+        query = query_module.voir_table(choix_bdd)
 
-    elif style_base_donné == "MongoDB":
-        if connection:
-            table_names = voir_collections_mongo(connection, choix_bdd)
+    if query is not None:
+        try:
+            cursor.execute(query)
+            print(f"Requête SQL exécutée : {query}")
+            table_names = [row[0] for row in cursor.fetchall()]
             return table_names
+        except Exception as e:
+            return [f"Erreur lors de la récupération des tables : {str(e)}"]
 
     return []

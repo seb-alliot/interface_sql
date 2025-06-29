@@ -6,10 +6,6 @@ project_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
-from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, voir_base_maria, voir_contenu_maria
-from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, voir_base_postgresql, voir_contenu_table_postgres
-from main.utils.module.mongo_db import connect_to_mongo, MONGO_DB_CONFIG
-from main.utils.module.mongo_db import voir_contenu_collection_mongo
 from main.utils.gestion_bdd.affichage_table import recuperer_tables
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
@@ -20,28 +16,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer
 from main.utils.fonction_diverse import Close
+from main.utils.fonction_diverse import importer_module_bdd
 
-# Configurations pour PostgreSQL et MariaDB uniquement
-db_configs = {
-    "PostgreSQL": {
-        "config_bdd": POSTGRESQL_CONFIG,
-        "connector": connect_to_postgresql_database,
-        "query_bdd": voir_base_postgresql,
-        "query_table": voir_contenu_table_postgres,
-    },
-    "MariaDB": {
-        "config_bdd": MARIA_DB_CONFIG,
-        "connector": connect_to_maria_database,
-        "query_bdd": voir_base_maria,
-        "query_table": voir_contenu_maria,
-    },
-    "MongoDB": {
-        "config_bdd": MONGO_DB_CONFIG,
-        "connector": None,
-        "query_bdd": None,
-        "query_table": voir_contenu_collection_mongo,
-    }
-}
 
 class Afficher_Table_SQL_Window(QWidget):
     def __init__(self, style_base_donné, connection, choix_bdd, table_name):
@@ -54,6 +30,11 @@ class Afficher_Table_SQL_Window(QWidget):
         self.choix_bdd = choix_bdd
         self.table_name = table_name[0] if isinstance(table_name, list) else table_name
         self.connection = connection
+
+        # Import dynamique du module adapté à la BDD
+        self.module = importer_module_bdd(self.style_base_donné)
+        self.module_query = self.module.import_query_module("voir_contenu_table")
+
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -80,15 +61,20 @@ class Afficher_Table_SQL_Window(QWidget):
         self.afficher_contenu_table()
 
     def afficher_contenu_table(self):
-        choix = self.style_base_donné
+        if not self.connection:
+            self.message_label.setText("Aucune connexion active.")
+            return
+        if self.style_base_donné == "MongoDB":
+            connection = self.connection
+        else:
+            connection = self.connection[0]
+        if not connection:
+            self.message_label.setText("Connexion invalide.")
+            return
 
-        if choix == "MongoDB":
+        if self.style_base_donné == "MongoDB":
             try:
-                if self.connection is None:
-                    self.message_label.setText(f"Connexion échouée : MongoDB non connecté.")
-                    return
-
-                contenu = voir_contenu_collection_mongo(self.connection, self.choix_bdd, self.table_name)
+                contenu = self.module_query.voir_contenu_table(connection, self.choix_bdd, self.table_name)
 
                 if not contenu:
                     self.message_label.setText(f"La collection {self.table_name} est vide ou inexistante.")
@@ -110,36 +96,26 @@ class Afficher_Table_SQL_Window(QWidget):
                 self.message_label.setText(f"Erreur MongoDB : {e}")
             return
 
-        if choix in db_configs:
-            try:
-                connection, erreur = self.connection, None
-                query_table = db_configs[choix]["query_table"]
+        # --- Cas SQL (PostgreSQL, MariaDB) ---
+        try:
+            cursor = connection.cursor()
+            cursor.execute(self.module_query.voir_contenu_table(self.table_name))
+            toutes_les_lignes = cursor.fetchall()
+            noms_colonnes = [info[0] for info in cursor.description]
 
-                if not connection:
-                    self.message_label.setText(f"Connexion échouée : {erreur}")
-                    return
+            self.table_tableau.setRowCount(len(toutes_les_lignes))
+            self.table_tableau.setColumnCount(len(noms_colonnes))
+            self.table_tableau.setHorizontalHeaderLabels(noms_colonnes)
 
-                curseur = connection.cursor()
-                curseur.execute(query_table(self.table_name))
-                toutes_les_lignes = curseur.fetchall()
-                noms_colonnes = [info[0] for info in curseur.description]
+            for i, ligne in enumerate(toutes_les_lignes):
+                for j, valeur in enumerate(ligne):
+                    self.table_tableau.setItem(i, j, QTableWidgetItem(str(valeur)))
 
-                self.table_tableau.setRowCount(len(toutes_les_lignes))
-                self.table_tableau.setColumnCount(len(noms_colonnes))
-                self.table_tableau.setHorizontalHeaderLabels(noms_colonnes)
-
-                for i, ligne in enumerate(toutes_les_lignes):
-                    for j, valeur in enumerate(ligne):
-                        self.table_tableau.setItem(i, j, QTableWidgetItem(str(valeur)))
-
-                self.table_tableau.resizeColumnsToContents()
-                self.table_tableau.resizeRowsToContents()
-                self.message_label.setText(f"Contenu de la table {self.table_name} affiché avec succès.")
-            except Exception as e:
-                print(f"Erreur SQL ({self.table_name}) : {e}")
-                self.message_label.setText(f"Erreur SQL : {e}")
-        else:
-            self.message_label.setText("Type de base de données non pris en charge.")
+            self.table_tableau.resizeColumnsToContents()
+            self.table_tableau.resizeRowsToContents()
+            self.message_label.setText(f"Contenu de la table {self.table_name} affiché avec succès.")
+        except Exception as e:
+            self.message_label.setText(f"Erreur SQL : {e}")
 
     def retour(self):
         self.message_label.setText("Retour à la sélection de la table...")

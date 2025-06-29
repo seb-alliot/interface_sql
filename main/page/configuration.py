@@ -2,20 +2,16 @@ import sys
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QCheckBox
-)
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QCheckBox
 from PyQt6.QtCore import Qt, QTimer
 
 from settings import APP_NAME, VERSION
-from main.utils.module.postgres import POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT, postgresql_auto_connect
-from main.utils.module.maria_db import MARIA_DB_CONFIG, MARIA_AUTO_CONNECT, maria_auto_connect
-from main.utils.module.mongo_db import connect_to_mongo, MONGO_DB_CONFIG, mongo_auto_connect
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.save_donne.config_bdd import save_bdd_config
 from main.page.menu_principal_bdd import Menu_Principal_Window
-from main import center_on_screen
 from main.utils import Close
+from main import center_on_screen
+from main.utils.fonction_diverse.import_modul import importer_module_bdd
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
 load_dotenv(dotenv_path=dotenv_path)
@@ -29,8 +25,15 @@ class ConfigurationWindow(QWidget):
         self.setFocus()
 
         self.style_base_donné = style_base_donné
-        self.connection = connection if connection else None
+        self.connection = connection
         self.inputs = {}
+
+        try:
+            self.module = importer_module_bdd(self.style_base_donné)
+        except ImportError as e:
+            self.module = None
+            self.message_label.setText(str(e))
+            return
 
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -45,35 +48,15 @@ class ConfigurationWindow(QWidget):
         self.message_label.setStyleSheet("font-size: 14px; color: orange;")
         main_layout.addWidget(self.message_label)
 
-        if style_base_donné == "PostgreSQL":
-            self.checkbox_auto_connect = QCheckBox("Connexion automatique")
-            self.checkbox_auto_connect.setChecked(postgresql_auto_connect())
-            config = POSTGRESQL_CONFIG()
-            champs = self.generer_champs_config(config)
-
-        elif style_base_donné == "MariaDB":
-            self.checkbox_auto_connect = QCheckBox("Connexion automatique")
-            self.checkbox_auto_connect.setChecked(maria_auto_connect())
-            config = MARIA_DB_CONFIG()
-            champs = self.generer_champs_config(config)
-
-        elif style_base_donné == "MongoDB":
-            self.checkbox_auto_connect = QCheckBox("Connexion automatique")
-            self.checkbox_auto_connect.setChecked(mongo_auto_connect())
-            config = MONGO_DB_CONFIG()
-            champs = [
-                ("bdd_name", "Nom de la base de données", QLineEdit.EchoMode.Normal, config.get("database", "")),
-                ("user", "Nom d'utilisateur", QLineEdit.EchoMode.Normal, config.get("user", "")),
-                ("password", "Mot de passe", QLineEdit.EchoMode.Password, config.get("password", "")),
-                ("host", "Hôte MongoDB (cluster).exemple.mongodb.net", QLineEdit.EchoMode.Normal, config.get("host", "")),
-                ("app_name", "Nom de l'app (optionnel)", QLineEdit.EchoMode.Normal, config.get("app_name", "")),
-            ]
-
-        else:
-            self.message_label.setText(f"Type de BDD non reconnu : {style_base_donné}")
-            return
-
+        self.checkbox_auto_connect = QCheckBox("Connexion automatique")
+        auto_key = f"{self.style_base_donné.upper()}_AUTO_CONNECT"
+        auto_connection= os.getenv(auto_key, "False").lower() == "true"
+        self.checkbox_auto_connect.setChecked(auto_connection)
         main_layout.addWidget(self.checkbox_auto_connect, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # On récupère dynamiquement la config
+        champs = self.generer_champs_config(self.module.config())
+
         for nom_input, placeholder, echo, valeur_defaut in champs:
             champ = self.creer_input(placeholder, echo)
             if valeur_defaut:
@@ -98,14 +81,30 @@ class ConfigurationWindow(QWidget):
         self.setLayout(main_layout)
 
     def generer_champs_config(self, config):
-        is_default = config.get("dbname", config.get("database", "")).lower() == "default"
-        return [
-            ("bdd_name", "Nom de la base de données", QLineEdit.EchoMode.Normal, "" if is_default else config.get("dbname", config.get("database", ""))),
-            ("user", "Nom d'utilisateur", QLineEdit.EchoMode.Normal, "" if is_default else config.get("user", "")),
-            ("password", "Mot de passe", QLineEdit.EchoMode.Password, "" if is_default else config.get("password", "")),
-            ("host", "Hôte de la base de données", QLineEdit.EchoMode.Normal, "" if is_default else config.get("host", "")),
-            ("port", "Port de la base de données", QLineEdit.EchoMode.Normal, "" if is_default else str(config.get("port", ""))),
-        ]
+        # Adaptation générique (PostgreSQL, MariaDB, MongoDB)
+        champs = []
+
+        # Liste probable des champs pour tous types de base de données
+        mapping = {
+            "bdd_name": ("Nom de la base de données", "dbname", "database"),
+            "user": ("Nom d'utilisateur", "user"),
+            "password": ("Mot de passe", "password"),
+            "host": ("Hôte", "host"),
+            "port": ("Port", "port"),
+            "app_name": ("Nom de l'application", "app_name")
+        }
+
+        for key, (placeholder, *aliases) in mapping.items():
+            value = ""
+            for alias in aliases:
+                if alias in config:
+                    value = str(config[alias])
+                    break
+            # on transforme le champs en étoiles
+            echo = QLineEdit.EchoMode.Password if "password" in key else QLineEdit.EchoMode.Normal
+            champs.append((key, placeholder, echo, value))
+
+        return champs
 
     def creer_input(self, placeholder, echo_mode):
         champ = QLineEdit()
@@ -120,90 +119,16 @@ class ConfigurationWindow(QWidget):
 
     def reload_config(self):
         load_dotenv(dotenv_path=dotenv_path, override=True)
-        if self.style_base_donné == "PostgreSQL":
-            self.checkbox_auto_connect.setChecked(postgresql_auto_connect())
-        elif self.style_base_donné == "MariaDB":
-            self.checkbox_auto_connect.setChecked(maria_auto_connect())
-        elif self.style_base_donné == "MongoDB":
-            self.checkbox_auto_connect.setChecked(mongo_auto_connect())
 
     def bouton_validation(self):
+        data = {key: champ.text().strip() for key, champ in self.inputs.items()}
         auto_connect = self.checkbox_auto_connect.isChecked()
 
-        if self.style_base_donné == "MongoDB":
-            dbname = self.inputs.get("bdd_name").text().strip()
-            user = self.inputs.get("user").text().strip()
-            password = self.inputs.get("password").text().strip()
-            host = self.inputs.get("host").text().strip()
-            app_name = self.inputs.get("app_name").text().strip() or "Cluster0"
-
-            if not all([dbname, user, password, host]):
-                self.afficher_message("Tous les champs sauf app_name sont obligatoires.")
-                return
-
-            db_config = {
-                "MONGO_NAME": dbname,
-                "MONGO_USER": user,
-                "MONGO_PASSWORD": password,
-                "MONGO_HOST": host,
-                "MONGO_APP_NAME": app_name,
-                "MONGO_AUTO_CONNECT": auto_connect,
-            }
-
-        elif self.style_base_donné == "PostgreSQL":
-            dbname = self.inputs.get("bdd_name").text().strip()
-            user = self.inputs.get("user").text().strip()
-            password = self.inputs.get("password").text().strip()
-            host = self.inputs.get("host").text().strip()
-            port = self.inputs.get("port").text().strip()
-
-            try:
-                port_int = int(port)
-                if not (1 <= port_int <= 65535):
-                    raise ValueError
-            except ValueError:
-                self.afficher_message("Le port doit être un nombre entre 1 et 65535.")
-                return
-
-            db_config = {
-                "POSTGRESQL_NAME": dbname,
-                "POSTGRESQL_USER": user,
-                "POSTGRESQL_PASSWORD": password,
-                "POSTGRESQL_HOST": host,
-                "POSTGRESQL_PORT": port_int,
-                "POSTGRESQL_AUTO_CONNECT": auto_connect,
-            }
-
-        elif self.style_base_donné == "MariaDB":
-            dbname = self.inputs.get("bdd_name").text().strip()
-            user = self.inputs.get("user").text().strip()
-            password = self.inputs.get("password").text().strip()
-            host = self.inputs.get("host").text().strip()
-            port = self.inputs.get("port").text().strip()
-
-            try:
-                port_int = int(port)
-                if not (1 <= port_int <= 65535):
-                    raise ValueError
-            except ValueError:
-                self.afficher_message("Le port doit être un nombre entre 1 et 65535.")
-                return
-
-            db_config = {
-                "MARIA_NAME": dbname,
-                "MARIA_USER": user,
-                "MARIA_PASSWORD": password,
-                "MARIA_HOST": host,
-                "MARIA_PORT": port_int,
-                "MARIA_AUTO_CONNECT": auto_connect,
-            }
-
-        else:
-            self.afficher_message("Type de BDD non géré.")
-            return
-
         try:
-            save_bdd_config(db_config)
+            save_bdd_config({
+                **{f"{self.style_base_donné.upper()}_{k.upper()}": v for k, v in data.items()},
+                f"{self.style_base_donné.upper()}_AUTO_CONNECT": auto_connect
+            })
             self.reload_config()
             self.afficher_message("Configuration enregistrée avec succès.")
             QTimer.singleShot(1000, self.retour)
@@ -214,8 +139,9 @@ class ConfigurationWindow(QWidget):
         self.hide()
         self.main_window = Menu_Principal_Window(
             style_base_donné=self.style_base_donné,
-            connection=self.connection if self.connection else None
-            )
+            connection=self.connection,
+            choix_bdd=None,
+        )
         self.main_window.show()
         fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)

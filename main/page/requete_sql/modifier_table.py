@@ -1,40 +1,84 @@
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+
+# Gestion du chemin
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
-# --- Fin de la correction ---
-
-from main.utils.module.maria_db import connect_to_maria_database
-from main.utils.module.postgres import connect_to_postgresql_database
-from main import center_on_screen
-from main.utils.regles_visuelles.fad_widjet import fade_widget
-from main.page.menu_principal_bdd import Menu_Principal_Window
-from main.utils.fonction_diverse.recharge_env import recharger_env
-from main.utils import Close
 
 from settings import APP_NAME, VERSION
+from main import center_on_screen
+from main.utils import Close
+from main.utils.fonction_diverse import importer_module_bdd
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
+    QWidget, QVBoxLayout, QLabel, QTableWidget,
+    QTableWidgetItem, QPushButton, QMessageBox
 )
 from PyQt6.QtCore import Qt
-
 
 
 class Modifier_Table_Window(QWidget):
     def __init__(self, style_base_donné, connection, table_name):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
-        self.resize(600, 400)
+        self.resize(700, 450)
         center_on_screen(self)
 
         self.style_base_donné = style_base_donné
         self.connection = connection
-        self.table_name = table_name
-        self.setFocus()
+        self.table_name = table_name[0] if isinstance(table_name, list) else table_name
 
+        self.module = importer_module_bdd(self.style_base_donné)
 
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.title_label = QLabel(f"Modification de la table : {self.table_name}")
+        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
+        layout.addWidget(self.title_label)
+
+        self.message_label = QLabel("")
+        self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.message_label.setStyleSheet("font-size: 14px; color: orange;")
+        layout.addWidget(self.message_label)
+
+        self.table_widget = QTableWidget()
+        layout.addWidget(self.table_widget)
+
+        self.retour_button = QPushButton("Retour")
+        self.retour_button.clicked.connect(self.close)
+        layout.addWidget(self.retour_button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.setLayout(layout)
+        self.afficher_donnees_table()
+
+    def afficher_donnees_table(self):
+        try:
+            if self.style_base_donné == "MongoDB":
+                self.message_label.setText("Modification MongoDB non prise en charge ici.")
+                return
+
+            curseur = self.connection.cursor()
+            requete = self.module.query.voir_contenu_table(self.table_name)
+            curseur.execute(requete)
+            lignes = curseur.fetchall()
+            colonnes = [desc[0] for desc in curseur.description]
+
+            self.table_widget.setRowCount(len(lignes))
+            self.table_widget.setColumnCount(len(colonnes))
+            self.table_widget.setHorizontalHeaderLabels(colonnes)
+
+            for i, ligne in enumerate(lignes):
+                for j, valeur in enumerate(ligne):
+                    self.table_widget.setItem(i, j, QTableWidgetItem(str(valeur)))
+
+            self.table_widget.resizeColumnsToContents()
+            self.message_label.setText(f"{len(lignes)} lignes affichées.")
+        except Exception as e:
+            self.message_label.setText(f"Erreur : {e}")
+            print(f"[Erreur Modifier_Table_Window] : {e}")
 
     def closeEvent(self, event):
         Close(self, event)

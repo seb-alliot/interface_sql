@@ -1,4 +1,4 @@
-def voir_contenu_table_postgres(table_name):
+def voir_contenu_table(table_name):
     """
     Retourne le contenu d'une table PostgreSQL.
     :param table_name: Nom de la table à consulter.

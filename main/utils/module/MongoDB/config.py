@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-def MONGO_DB_CONFIG(user=None, password=None, dbname=None):
+def config(user=None, password=None, dbname=None):
     user = user or os.getenv("MONGO_USER")
     password = password or os.getenv("MONGO_PASSWORD")
     host = os.getenv("MONGO_HOST")
@@ -33,13 +33,11 @@ MONGO_URI = (
 )
 
 # Fonction booléenne propre pour l'autoconnect
-def mongo_auto_connect():
+def auto_connect():
     return os.getenv('MONGO_AUTO_CONNECT', 'False').strip().lower() in ('true', '1', 'yes')
 
 # Variable booléenne globale
-MONGO_AUTO_CONNECT = mongo_auto_connect()
+MONGO_AUTO_CONNECT = auto_connect()
 
 # Dictionnaire global
-MONGO_DB = MONGO_DB_CONFIG()
-
-
+MONGO_DB = config()

@@ -1,30 +1,20 @@
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+from PyQt6.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QPushButton, QLabel,
+    QTableWidget, QTableWidgetItem, QTextEdit, QHeaderView
+)
+from PyQt6.QtCore import Qt, QTimer
+
+from main.utils import Close
+from main.utils.fonction_diverse.import_modul import importer_module_bdd
+
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
-# --- Fin de la correction ---
 
-from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
-from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
-from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QPushButton, QLabel,  QTableWidget, QTableWidgetItem, QTextEdit, QHeaderView
-)
-from PyQt6.QtCore import Qt, QTimer
-from main.utils import Close
-
-# Dictionnaire factorisé
-db_configs = {
-    "PostgreSQL": {
-    "config_bdd": POSTGRESQL_CONFIG,
-    "connector": connect_to_postgresql_database,
-    },
-    "MariaDB": {
-    "config_bdd": MARIA_DB_CONFIG,
-    "connector": connect_to_maria_database,
-    }
-}
+load_dotenv(dotenv_path=project_root / ".env")
 
 
 class SQL_Window(QWidget):
@@ -34,7 +24,7 @@ class SQL_Window(QWidget):
         self.resize(800, 600)
 
         self.style_base_donné = style_base_donné
-        self.config = db_configs
+        self.module = importer_module_bdd(self.style_base_donné)
         self.choix_bdd = choix_bdd
         self.connection = connection
 
@@ -69,9 +59,8 @@ class SQL_Window(QWidget):
             style_base_donné=self.style_base_donné,
             connection=self.connection,
             choix_bdd=self.choix_bdd
-            )
+        )
         self.menu_window.show()
-        self.close()
 
     def executer_requete(self):
         requete = self.zone_sql.toPlainText().strip()
@@ -79,13 +68,23 @@ class SQL_Window(QWidget):
             self.label_info.setText("Aucune requête à exécuter.")
             return
 
-        connexion, erreur = connect_to_postgresql_database()
-        if not connexion:
-            self.label_info.setText(f"Erreur de connexion : {erreur}")
+        try:
+            config_bdd = self.module.config(dbname=self.choix_bdd)
+            connection_result = self.module.connect(config_bdd)
+        except Exception as e:
+            self.label_info.setText(f"Erreur de connexion : {e}")
             return
 
-        curseur = connexion.cursor()
+        if isinstance(connection_result, tuple):
+            connexion, erreur = connection_result
+            if not connexion:
+                self.label_info.setText(f"Erreur de connexion : {erreur}")
+                return
+        else:
+            connexion = connection_result
+
         try:
+            curseur = connexion.cursor()
             curseur.execute(requete)
 
             if curseur.description:
@@ -93,7 +92,7 @@ class SQL_Window(QWidget):
                 noms_colonnes = [desc[0] for desc in curseur.description]
                 self.afficher_resultat(resultats, noms_colonnes)
                 self.label_info.setText("Requête exécutée avec succès.")
-            else:  #
+            else:
                 connexion.commit()
                 self.resultat_table.setRowCount(0)
                 self.resultat_table.setColumnCount(0)
@@ -101,8 +100,6 @@ class SQL_Window(QWidget):
 
         except Exception as e:
             self.label_info.setText(f"Erreur : {e}")
-        finally:
-            Close(connexion, curseur)
 
     def afficher_resultat(self, lignes, colonnes):
         self.resultat_table.clear()
@@ -117,3 +114,7 @@ class SQL_Window(QWidget):
 
         self.resultat_table.resizeColumnsToContents()
         self.resultat_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+
+    def closeEvent(self, event):
+        Close(self, event)

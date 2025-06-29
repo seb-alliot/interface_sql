@@ -3,42 +3,22 @@ from PyQt6.QtCore import Qt
 from main.page.menu_principal_bdd import Menu_Principal_Window
 from main.page.configuration import ConfigurationWindow
 from main.page.login import LoginWindow
-from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
-from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
-from main.utils.module.mongo_db import connect_to_mongo, MONGO_DB_CONFIG, MONGO_AUTO_CONNECT
 
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.fonction_diverse.recharge_env import recharger_env
 from settings import VERSION, APP_NAME
-from main.utils import Close, fermer_et_transfere
+from main.utils import fermer_et_transfere
+from main.utils.fonction_diverse import importer_module_bdd
 
-# Dictionnaire factorisé pour les configs de base de données
-db_configs = {
-    "PostgreSQL": {
-        "config_bdd": POSTGRESQL_CONFIG,
-        "connector": connect_to_postgresql_database,
-        "auto_connect": POSTGRESQL_AUTO_CONNECT,
-    },
-    "MariaDB": {
-        "config_bdd": MARIA_DB_CONFIG,
-        "connector": connect_to_maria_database,
-        "auto_connect": MARIA_AUTO_CONNECT
-    },
-    "MongoDB": {
-        "config_bdd": MONGO_DB_CONFIG,
-        "connector": connect_to_mongo,
-        "auto_connect": MONGO_AUTO_CONNECT,
-    }
-}
 
 class ChoixBDDWindow(QWidget):
-    def __init__(self,connection=None, style_base_donné=None):
+    def __init__(self, connection=None, style_base_donné=None):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         self.style_base_donné = style_base_donné
         self.connection = connection
-        print(f"Connection choix bdd : {self.connection}")
+        self.module = None  # stockera l'instance ModuleBDD
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -47,7 +27,7 @@ class ChoixBDDWindow(QWidget):
         layout.addWidget(self.label)
 
         self.combo = QComboBox()
-        self.combo.addItems(["PostgreSQL", "MariaDB","MongoDB", "SQLite"])
+        self.combo.addItems(["PostgreSQL", "MariaDB", "MongoDB", "SQLite"])
         layout.addWidget(self.combo)
 
         self.button = self._create_button("Continuer", self.tester_connection)
@@ -72,38 +52,44 @@ class ChoixBDDWindow(QWidget):
     def tester_connection(self):
         recharger_env()
         choix = self.combo.currentText()
-        error = None
 
-        if choix in db_configs:
-            config_bdd = db_configs[choix]["config_bdd"]
-            auto_connect = db_configs[choix]["auto_connect"]
-            connect_bdd = db_configs[choix]["connector"]
+        if choix == "SQLite":
+            self._set_label("SQLite n'est pas encore pris en charge.", "red")
+            return
 
-            db_config = config_bdd()
+        try:
+            # Import dynamique du module BDD (config + connection)
+            self.module = importer_module_bdd(choix)
+            print(f"Module importé pour {choix}: {self.module}")
+            if not self.module:
+                self._set_label("Module introuvable pour ce type de base.", "red")
+                return
+
+            # Récupérer la config (avec config() sans argument ici)
+            config_bdd = self.module.config()
+
+            # Auto connect si possible (booléen)
+            auto_connect = self.module.auto_connect()
 
             if auto_connect:
-                try:
-                    connection, error = connect_bdd(db_config)
-                    if connection:
-                        self._set_label(f"Connexion réussie à {choix} !", "green")
-                        self.connection = connection
-                        self.ouvrir_fenetre(Menu_Principal_Window)
-                    else:
-                        self._set_label(f"Erreur: {error}", "red")
-
-                except Exception as e:
-                    self._set_label(f"Erreur de connexion : {str(e)}", "red")
-            else:
-                if connect_bdd:
+                # Connection retourne juste l'objet connexion ou None
+                connection = self.module.connect(config_bdd)
+                if connection and auto_connect:
+                    self._set_label(f"Connexion réussie à {choix} !", "green")
+                    self.connection = connection
+                    # Ouvre la fenêtre principale en passant style et connexion
+                    self.ouvrir_fenetre(Menu_Principal_Window)
+                elif connection and not auto_connect:
                     self._set_label("Veuillez entrer vos identifiants de connexion :", "orange")
+                    # Ouvre la fenêtre de login, qui doit gérer la connexion manuelle
                     self.ouvrir_fenetre(LoginWindow)
-                else:
-                    self._set_label("Veuillez paramétrer votre base de données.", "red")
-                    self.ouvrir_fenetre(ConfigurationWindow)
-        elif choix == "SQLite":
-            self._set_label("SQLite n'est pas encore pris en charge.", "red")
+            else:
+                self._set_label("Mauvaise configuration veuillez la corriger :", "orange")
+                # Ouvre la fenêtre de login, qui doit gérer la connexion manuelle
+                self.ouvrir_fenetre(ConfigurationWindow)
 
-
+        except Exception as e:
+            self._set_label(f"Erreur lors de la connexion : {e}", "red")
 
     def _set_label(self, text, color):
         self.label.setText(text)
@@ -119,7 +105,6 @@ class ChoixBDDWindow(QWidget):
         self.next_window.show()
         fade_widget(self.next_window, duration=500, fade_in=True)
         fermer_et_transfere(self)
-
 
     def _fade_to(self, fenetre_a_ouvrir):
         fade_widget(self, duration=500, fade_in=False,

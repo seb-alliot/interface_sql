@@ -13,7 +13,7 @@ def MONGO_DB_CONFIG():
         "app_name": os.getenv("MONGO_NAME", "Cluster0"),
     }
 
-def connect_to_mongo(config=None):
+def connect(config=None):
     if config is None or callable(config):
         config = MONGO_DB_CONFIG()
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     print(f"URI          : {uri.replace(config.get('password'), '***')}")
 
     print("\n🔌 Tentative de connexion à MongoDB...")
-    client, error = connect_to_mongo(config)
+    client, error = connect(config)
     if client:
         print("✅ Connexion à MongoDB réussie !")
         print("📁 Bases disponibles :", client.list_database_names())

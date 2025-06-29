@@ -1,41 +1,34 @@
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QPushButton, QLabel,
+    QTableWidget, QTableWidgetItem, QTextEdit, QHeaderView
+)
+from PyQt6.QtCore import Qt
+
+from main.utils.fonction_diverse.import_modul import importer_module_bdd
+from main.utils import Close
+from main.utils.gestion_bdd.affichage_table import recuperer_tables
+
+# Chargement des variables d’environnement
 project_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
-# --- Fin de la correction ---
 
-from main.utils.module.maria_db import connect_to_maria_database, MARIA_DB_CONFIG, MARIA_AUTO_CONNECT
-from main.utils.module.postgres import connect_to_postgresql_database, POSTGRESQL_CONFIG, POSTGRESQL_AUTO_CONNECT
-from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QPushButton, QLabel,  QTableWidget, QTableWidgetItem, QTextEdit, QHeaderView
-)
-from PyQt6.QtCore import Qt, QTimer
-from main.utils import Close
-
-# Dictionnaire factorisé
-db_configs = {
-    "PostgreSQL": {
-    "config_bdd": POSTGRESQL_CONFIG,
-    "connector": connect_to_postgresql_database,
-    },
-    "MariaDB": {
-    "config_bdd": MARIA_DB_CONFIG,
-    "connector": connect_to_maria_database,
-    }
-}
+load_dotenv(dotenv_path=project_root / ".env")
 
 
-class Afficher_Table_SQL_Window(QWidget):
-    def __init__(self,style_base_donné,dbname, table_name):
+class Requete_sql_sur_table(QWidget):
+    def __init__(self, style_base_donné, connection, choix_bdd , table_name):
         super().__init__()
         self.setWindowTitle("Console SQL")
         self.resize(800, 600)
 
         self.style_base_donné = style_base_donné
-        self.config = db_configs
-        self.dbname = dbname
+        self.module = importer_module_bdd(self.style_base_donné)
+        self.connection = connection
+        self.choix_bdd = choix_bdd
         self.table_name = table_name
 
         layout = QVBoxLayout()
@@ -45,7 +38,6 @@ class Afficher_Table_SQL_Window(QWidget):
         layout.addWidget(self.zone_sql)
 
         self.bouton_exec = QPushButton("Exécuter la requête")
-        self.bouton_exec.clicked.connect(self.executer_requete)
         layout.addWidget(self.bouton_exec)
 
         self.label_info = QLabel("")
@@ -64,56 +56,19 @@ class Afficher_Table_SQL_Window(QWidget):
 
     def retour_menu(self):
         self.hide()
-        from main.utils import Close
-        Close(self)
         from main.page.gestion_table import GestionTableWindow
-        self.menu_window = GestionTableWindow( self.style_base_donné, self.dbname, self.table_name)
+        self.menu_window = GestionTableWindow(
+            self.style_base_donné,
+            self.connection,
+            self.choix_bdd,
+            table_name= recuperer_tables(
+                self.style_base_donné,
+                self.connection,
+                self.choix_bdd
+            )
+        )
         self.menu_window.show()
         self.close()
 
-    def executer_requete(self):
-        requete = self.zone_sql.toPlainText().strip()
-        if not requete:
-            self.label_info.setText("Aucune requête à exécuter.")
-            return
-        if self.style_base_donné == "PostgreSQL":
-            connexion, erreur = connect_to_postgresql_database()
-        elif self.style_base_donné == "MariaDB":
-            connexion, erreur = connect_to_maria_database()
-        if not connexion:
-            self.label_info.setText(f"Erreur de connexion : {erreur}")
-            return
-
-        curseur = connexion.cursor()
-        try:
-            curseur.execute(requete)
-
-            if curseur.description:
-                resultats = curseur.fetchall()
-                noms_colonnes = [desc[0] for desc in curseur.description]
-                self.afficher_resultat(resultats, noms_colonnes)
-                self.label_info.setText("Requête exécutée avec succès.")
-            else:  # INSERT, UPDATE, DELETE
-                connexion.commit()
-                self.resultat_table.setRowCount(0)
-                self.resultat_table.setColumnCount(0)
-                self.label_info.setText("Requête exécutée avec succès (aucun résultat).")
-
-        except Exception as e:
-            self.label_info.setText(f"Erreur : {e}")
-        finally:
-            Close(connexion, curseur)
-
-    def afficher_resultat(self, lignes, colonnes):
-        self.resultat_table.clear()
-        self.resultat_table.setRowCount(len(lignes))
-        self.resultat_table.setColumnCount(len(colonnes))
-        self.resultat_table.setHorizontalHeaderLabels(colonnes)
-
-        for i, ligne in enumerate(lignes):
-            for j, valeur in enumerate(ligne):
-                item = QTableWidgetItem(str(valeur))
-                self.resultat_table.setItem(i, j, item)
-
-        self.resultat_table.resizeColumnsToContents()
-        self.resultat_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    def closeEvent(self, event):
+        Close(self, event)

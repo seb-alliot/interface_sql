@@ -1,2 +1,2 @@
-def voir_base_maria():
+def voir_base():
     return "SHOW DATABASES;"

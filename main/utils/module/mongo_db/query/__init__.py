@@ -1,2 +1,0 @@
-from .query_voir_base import voir_collections_mongo
-from .voir_table import voir_contenu_collection_mongo

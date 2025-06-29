@@ -13,6 +13,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from settings import APP_NAME, VERSION
 from main.utils import Close, fermer_et_transfere
+from main.utils.fonction_diverse import importer_module_bdd
+from main.utils.gestion_bdd.affichage_table import recuperer_tables
 
 
 class GestionTableWindow(QWidget):
@@ -35,7 +37,7 @@ class GestionTableWindow(QWidget):
         }
     """
 
-    def __init__(self, style_base_donné,connection,choix_bdd, table_name):
+    def __init__(self, style_base_donné, connection, choix_bdd, table_name):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
@@ -45,7 +47,8 @@ class GestionTableWindow(QWidget):
         self.table_name = table_name
         self.connection = connection
 
-        self.action_selectionnee = None
+        # Import dynamique du module selon style_base_donné
+        self.module = importer_module_bdd(self.style_base_donné)
 
         vertical_layout = QVBoxLayout()
 
@@ -129,7 +132,7 @@ class GestionTableWindow(QWidget):
             QMessageBox.warning(self, "Erreur", "Veuillez sélectionner une table.")
             return
 
-        if not self.action_selectionnee:
+        if not hasattr(self, "action_selectionnee") or not self.action_selectionnee:
             QMessageBox.warning(self, "Erreur", "Veuillez sélectionner une action.")
             return
 
@@ -147,8 +150,7 @@ class GestionTableWindow(QWidget):
             self.style_base_donné,
             self.connection,
             self.choix_bdd,
-            )
-
+        )
         self.menu_bdd_window.show()
 
     def afficher_table(self):
@@ -170,12 +172,12 @@ class GestionTableWindow(QWidget):
 
     def afficher_console_sql(self):
         fermer_et_transfere(self)
-        from main.page.differente_bdd.requete_sql_sur_table import Afficher_Table_SQL_Window
-        self.requete_sql_window = Afficher_Table_SQL_Window(
+        from main.page.differente_bdd.requete_sql_sur_table import Requete_sql_sur_table
+        self.requete_sql_window = Requete_sql_sur_table(
             self.style_base_donné,
             self.connection,
             self.choix_bdd,
-            [self.combo.currentText()]
+            table_name=[self.combo.currentText()],
         )
         self.requete_sql_window.show()
 
