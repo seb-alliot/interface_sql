@@ -9,9 +9,12 @@ if str(project_root) not in sys.path:
 from main import center_on_screen
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.page.menu_principal_bdd import Menu_Principal_Window
+from main.page.configuration import ConfigurationWindow
 from main.utils.fonction_diverse.recharge_env import recharger_env
 from main.utils import Close
 from main.utils.fonction_diverse import importer_module_bdd
+from main.utils import fermer_et_transfere
+
 
 from settings import APP_NAME, VERSION
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel
@@ -19,12 +22,13 @@ from PyQt6.QtCore import Qt
 
 
 class LoginWindow(QWidget):
-    def __init__(self, style_base_donne):
+    def __init__(self, style_base_donne, connection):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
         self.style_base_donne = style_base_donne
+        self.connection = connection
         self.module = importer_module_bdd(self.style_base_donne)
         self.setFocus()
 
@@ -66,6 +70,12 @@ class LoginWindow(QWidget):
         self.bouton.clicked.connect(self.bouton_connection)
         content_layout.addWidget(self.bouton, alignment=Qt.AlignmentFlag.AlignCenter)
 
+        self.bouton_config = QPushButton("Configurer la base de données")
+        self.bouton_config.setMinimumSize(200, 30)
+        self.bouton_config.setMaximumSize(300, 30)
+        self.bouton_config.clicked.connect(self.show_main_config)
+        content_layout.addWidget(self.bouton_config, alignment=Qt.AlignmentFlag.AlignCenter)
+        
         self.message_info = QLabel("")
         self.message_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(self.message_info, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -78,40 +88,53 @@ class LoginWindow(QWidget):
 
     def bouton_connection(self):
         recharger_env()
-        nom = self.input_pseudo.text().strip()
-        if not nom:
+        user = self.input_pseudo.text().strip()
+        password = self.input_password.text().strip()
+
+        if not user:
             self.message_info.setText("Veuillez entrer un identifiant.")
             return
-
-        password = self.input_password.text().strip()
         if not password:
             self.message_info.setText("Veuillez entrer un mot de passe.")
             return
 
         try:
-            config = self.module["config"].get_config(user=nom, password=password)
-            connection = self.module["connection"].connect(config)
+            config = self.module.config(user=user, password=password)
 
-            # auto_connect doit venir du .env avec le bon prefixe
-            auto_connect_var = f"{self.style_base_donne.upper()}_AUTO_CONNECT"
-            auto_connect = os.getenv(auto_connect_var, "False").lower() == "true"
+            if config is None:
+                self.message_info.setText("Configuration invalide.")
+                return
 
-            if connection and auto_connect:
+            connection, erreur = self.module.connect(config)
+
+            if connection:
                 self.message_info.setText("Connexion réussie !")
-                connection.close()
-                fade_widget(self, duration=300, fade_in=False, finished_callback=lambda: self.show_main_window(nom))
-            elif connection and not auto_connect:
-                self.message_info.setText("Veuillez entrer vos identifiants de connexion.")
-                fade_widget(self, duration=300, fade_in=False, finished_callback=lambda: self.show_main_window())
+                self.connection = connection
+                fade_widget(self, duration=300, fade_in=False, finished_callback=self.show_main_window)
             else:
-                self.message_info.setText("Échec de la connexion, veuillez vérifier vos identifiants.")
+                self.message_info.setText(f"Identifiant ou mot de passe incorrect : {erreur}")
+                return
+
 
         except Exception as e:
-            self.message_info.setText(f"Erreur lors de la connexion : {e}")
+            self.message_info.setText(f"Erreur : {e}")
 
+    def show_main_config(self):
+        fermer_et_transfere(self)
+        self.config_window = ConfigurationWindow(
+            self.style_base_donne,
+            connection=self.connection,
+            choix_bdd=None
+        )
+        fade_widget(self.config_window, duration=300, fade_in=True)
+        self.config_window.show()
     def show_main_window(self):
-        self.close()
-        self.main_window = Menu_Principal_Window(self.style_base_donne)
+        fermer_et_transfere(self)
+        self.main_window = Menu_Principal_Window(
+            self.style_base_donne,
+            connection=self.connection,
+            choix_bdd=None
+            )
         fade_widget(self.main_window, duration=300, fade_in=True)
         self.main_window.show()
 

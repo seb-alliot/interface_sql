@@ -1,5 +1,26 @@
 # Permet d'importer dynamiquement un module Python à partir d'une chaîne
 import importlib
+# Liste explicite des modules à inclure avec PyInstaller
+import main.utils.module.PostgreSQL.config
+import main.utils.module.PostgreSQL.connection
+import main.utils.module.PostgreSQL.query.voir_base
+import main.utils.module.PostgreSQL.query.create
+import main.utils.module.PostgreSQL.query.choix_id
+import main.utils.module.PostgreSQL.query.contrainte
+import main.utils.module.PostgreSQL.query.clef_primaire
+
+import main.utils.module.MariaDB.config
+import main.utils.module.MariaDB.connection
+import main.utils.module.MariaDB.query.voir_base
+import main.utils.module.MariaDB.query.create
+import main.utils.module.MariaDB.query.choix_id
+import main.utils.module.MariaDB.query.contrainte
+import main.utils.module.MariaDB.query.clef_primaire
+
+import main.utils.module.MongoDB.config
+import main.utils.module.MongoDB.connection
+import main.utils.module.MongoDB.query.voir_base
+import main.utils.module.MongoDB.query.create
 
 class ModuleBDD:
     """
@@ -59,6 +80,7 @@ class ModuleBDD:
 
             # Affiche dans la console le module qui a été chargé
             print(f"✅ Module query importé : {module_path}")
+            print(f"je cherche mongo import {module_query}")
 
             # Retourne le module prêt à être utilisé
             return module_query
@@ -98,4 +120,3 @@ def importer_module_bdd(style_base_donné):
     except ModuleNotFoundError as e:
         # Si un des deux modules est manquant, on lève une erreur explicite
         raise ImportError(f"Erreur d'importation dans {style_base_donné} : {e}")
-

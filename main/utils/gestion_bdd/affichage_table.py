@@ -1,18 +1,18 @@
 from main.utils.fonction_diverse import importer_module_bdd
 
-def recuperer_tables(style_base_donné, connection, choix_bdd):
-    module = importer_module_bdd(style_base_donné)
+def recuperer_tables(style_base_donne, connection, choix_bdd):
+    module = importer_module_bdd(style_base_donne)
     if not connection:
         return ["Aucune connexion active"]
 
     # Pour MongoDB, pas de cursor, on appelle direct la fonction spécifique
-    if style_base_donné == "MongoDB":
+    if style_base_donne == "MongoDB":
         try:
             query_module = module.import_query_module("voir_table")
-            table_names = query_module.voir_table(connection, choix_bdd)
+            table_names = query_module.voir_table(style_base_donne, connection, choix_bdd)
             if not table_names:
                 return f"Aucune table trouvé"
-            else:# liste des collections
+            else:
                 return table_names
         except Exception as e:
             return [f"Erreur lors de la récupération des collections : {str(e)}"]
@@ -26,9 +26,9 @@ def recuperer_tables(style_base_donné, connection, choix_bdd):
     query_module = module.import_query_module("voir_table")
 
     query = None
-    if style_base_donné == "PostgreSQL":
+    if style_base_donne == "PostgreSQL":
         query = query_module.voir_table()
-    elif style_base_donné == "MariaDB":
+    elif style_base_donne == "MariaDB":
         query = query_module.voir_table(choix_bdd)
 
     if query is not None:

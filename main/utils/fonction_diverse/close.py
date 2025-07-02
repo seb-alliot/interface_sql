@@ -12,7 +12,7 @@ def Close(widget, event):
         else:
             if changement:
                 return ["Changement de page en cours, fermeture de la connexion..."]
-            elif widget.connection[1]:
+            elif widget.connection:
                 return ["Aucune connexion active , {widget.connection[1]}"]
     finally:
         event.accept()

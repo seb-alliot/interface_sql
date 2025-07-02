@@ -28,6 +28,8 @@ class ChoixBDDWindow(QWidget):
 
         self.combo = QComboBox()
         self.combo.addItems(["PostgreSQL", "MariaDB", "MongoDB", "SQLite"])
+        self.combo.setMinimumSize(200, 30)
+        self.combo.setMaximumSize(300, 45)
         layout.addWidget(self.combo)
 
         self.button = self._create_button("Continuer", self.tester_connection)
@@ -37,14 +39,16 @@ class ChoixBDDWindow(QWidget):
 
     def _create_label(self, text):
         label = QLabel(text)
-        label.setFixedSize(300, 45)
+        label.setMaximumSize(200, 30)
+        label.setMaximumSize(300, 45)
         label.setStyleSheet("font-size: 14px; padding: 5px;")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         return label
 
     def _create_button(self, text, callback):
         button = QPushButton(text)
-        button.setFixedSize(300, 45)
+        button.setMinimumSize(200, 30)
+        button.setMaximumSize(300, 45)
         button.setStyleSheet("font-size: 14px; padding: 5px;")
         button.clicked.connect(callback)
         return button
@@ -70,17 +74,17 @@ class ChoixBDDWindow(QWidget):
             # Auto connect si possible (booléen)
             auto_connect = self.module.auto_connect()
 
-            if auto_connect:
-                # Connection retourne juste l'objet connexion ou None
-                connection = self.module.connect(config_bdd)
-                if connection and auto_connect:
+            # Connection retourne juste l'objet connexion ou None
+            connection = self.module.connect(config_bdd)
+            if connection and auto_connect:
                     self._set_label(f"Connexion réussie à {choix} !", "green")
                     self.connection = connection
                     # Ouvre la fenêtre principale en passant style et connexion
                     self.ouvrir_fenetre(Menu_Principal_Window)
-                elif connection and not auto_connect:
+            elif connection and not auto_connect:
                     self._set_label("Veuillez entrer vos identifiants de connexion :", "orange")
                     # Ouvre la fenêtre de login, qui doit gérer la connexion manuelle
+                    self.connection = connection
                     self.ouvrir_fenetre(LoginWindow)
             else:
                 self._set_label("Mauvaise configuration veuillez la corriger :", "orange")

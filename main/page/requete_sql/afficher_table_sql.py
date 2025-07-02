@@ -28,7 +28,7 @@ class Afficher_Table_SQL_Window(QWidget):
 
         self.style_base_donne = style_base_donne
         self.choix_bdd = choix_bdd
-        self.table_name = table_name[0] if isinstance(table_name, list) else table_name
+        self.table_name = table_name
         self.connection = connection
 
         # Import dynamique du module adapté à la BDD

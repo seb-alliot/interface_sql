@@ -94,7 +94,7 @@ class Menu_Principal_Window(QWidget):
             except Exception as e:
                 return [f"Erreur MongoDB : {str(e)}"]
 
-        connection = self.connection[0]
+        connection = self.connection[0] if isinstance(self.connection, tuple) else self.connection
         if not connection:
             return ["Connexion invalide"]
         cursor = connection.cursor()
