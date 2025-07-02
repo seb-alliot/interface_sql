@@ -19,13 +19,13 @@ from PyQt6.QtCore import Qt
 
 
 class LoginWindow(QWidget):
-    def __init__(self, style_base_donné):
+    def __init__(self, style_base_donne):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
-        self.style_base_donné = style_base_donné
-        self.module = importer_module_bdd(self.style_base_donné)
+        self.style_base_donne = style_base_donne
+        self.module = importer_module_bdd(self.style_base_donne)
         self.setFocus()
 
         main_vertical_layout = QVBoxLayout()
@@ -93,7 +93,7 @@ class LoginWindow(QWidget):
             connection = self.module["connection"].connect(config)
 
             # auto_connect doit venir du .env avec le bon prefixe
-            auto_connect_var = f"{self.style_base_donné.upper()}_AUTO_CONNECT"
+            auto_connect_var = f"{self.style_base_donne.upper()}_AUTO_CONNECT"
             auto_connect = os.getenv(auto_connect_var, "False").lower() == "true"
 
             if connection and auto_connect:
@@ -111,7 +111,7 @@ class LoginWindow(QWidget):
 
     def show_main_window(self):
         self.close()
-        self.main_window = Menu_Principal_Window(self.style_base_donné)
+        self.main_window = Menu_Principal_Window(self.style_base_donne)
         fade_widget(self.main_window, duration=300, fade_in=True)
         self.main_window.show()
 

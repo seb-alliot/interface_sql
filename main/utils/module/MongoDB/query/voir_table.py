@@ -8,5 +8,4 @@ def voir_table(connection, choix_bdd):
         db = connection[choix_bdd]
         return db.list_collection_names()
     except Exception as e:
-        print(f"Erreur lors de la récupération des collections : {e}")
         return []

@@ -19,15 +19,15 @@ from PyQt6.QtCore import Qt, QTimer
 
 
 class Menu_bddWindow(QWidget):
-    def __init__(self, style_base_donné, connection, choix_bdd):
+    def __init__(self, style_base_donne, connection, choix_bdd):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
-        self.style_base_donné = style_base_donné
+        self.style_base_donne = style_base_donne
         self.choix_bdd = choix_bdd
         self.connection = connection
-        # Import dynamique du module selon style_base_donné
-        self.module = importer_module_bdd(self.style_base_donné)
+        # Import dynamique du module selon style_base_donne
+        self.module = importer_module_bdd(self.style_base_donne)
 
         self.setFocus()
         content_layout = QVBoxLayout()
@@ -45,7 +45,7 @@ class Menu_bddWindow(QWidget):
         self.button_contenu_bdd = self.creer_bouton("Contenu de la bdd", self.afficher_contenu_bdd)
         self.button_chercher_dans_bdd = self.creer_bouton("Recherche dans la bdd", self.chercher_dans_bdd)
         self.button_faire_une_requete_sql = self.creer_bouton(
-            "Faire une requête SQL", self.faire_une_requete_sql,
+            "Gerer la base de données", self.Gerer_base_donnees,
             extra_style="font-size: 14px; padding: 5px;"
         )
         self.retour_button = self.creer_bouton("Retour", self.retour, min_width=200, max_width=300)
@@ -69,24 +69,22 @@ class Menu_bddWindow(QWidget):
 
     def afficher_contenu_bdd(self):
         try:
-            table_name = recuperer_tables(self.style_base_donné, self.connection, self.choix_bdd)
-            print(f" donné de afficher_contenu_bdd self.style_base_donné : {self.style_base_donné},")
-            print(f"table_name : {table_name}, connection : {self.connection}, choix_bdd : {self.choix_bdd}")
+            table_name = recuperer_tables(self.style_base_donne, self.connection, self.choix_bdd)
             self.ouvrir_gestion_table(table_name)
         except Exception as e:
             self.message_label.setText(f"Erreur lors de la récupération des tables : {e}")
-            print(f"Erreur globale : {e}")
 
     def chercher_dans_bdd(self):
         self.message_label.setText("Recherche en développement...")
 
-    def faire_une_requete_sql(self):
+    def Gerer_base_donnees(self):
         self.hide()
-        from main.page.differente_bdd.page_sql import SQL_Window
-        self.sql_window = SQL_Window(
-            self.style_base_donné,
-            self.connection,
-            self.choix_bdd,
+        from main.page.gerer_base import Gerer_Base_Window
+        self.sql_window = Gerer_Base_Window(
+            module=None,
+            style_base_donne=self.style_base_donne,
+            connection=self.connection,
+            choix_bdd=self.choix_bdd,
         )
         self.sql_window.show()
         fade_widget(self.sql_window, duration=500, fade_in=True)
@@ -96,9 +94,9 @@ class Menu_bddWindow(QWidget):
         self.hide()
         from main.page.menu_principal_bdd import Menu_Principal_Window
         self.main_window = Menu_Principal_Window(
-            self.style_base_donné,
+            self.style_base_donne,
             self.connection,
-            choix_bdd=self.module.import_query_module("return_base") if self.style_base_donné == "MongoDB" else self.choix_bdd,
+            choix_bdd=self.module.import_query_module("return_base") if self.style_base_donne == "MongoDB" else self.choix_bdd,
         )
         self.main_window.show()
         fade_widget(self.main_window, duration=500, fade_in=True)
@@ -108,7 +106,7 @@ class Menu_bddWindow(QWidget):
         self.hide()
         from main.page.gestion_table import GestionTableWindow
         self.gestion_table_window = GestionTableWindow(
-            self.style_base_donné,
+            self.style_base_donne,
             self.connection,
             self.choix_bdd,
             table_name=table_name,

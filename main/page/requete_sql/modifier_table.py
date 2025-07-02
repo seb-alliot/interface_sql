@@ -19,17 +19,17 @@ from PyQt6.QtCore import Qt
 
 
 class Modifier_Table_Window(QWidget):
-    def __init__(self, style_base_donné, connection, table_name):
+    def __init__(self, style_base_donne, connection, table_name):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(700, 450)
         center_on_screen(self)
 
-        self.style_base_donné = style_base_donné
+        self.style_base_donne = style_base_donne
         self.connection = connection
         self.table_name = table_name[0] if isinstance(table_name, list) else table_name
 
-        self.module = importer_module_bdd(self.style_base_donné)
+        self.module = importer_module_bdd(self.style_base_donne)
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -52,33 +52,8 @@ class Modifier_Table_Window(QWidget):
         layout.addWidget(self.retour_button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.setLayout(layout)
-        self.afficher_donnees_table()
 
-    def afficher_donnees_table(self):
-        try:
-            if self.style_base_donné == "MongoDB":
-                self.message_label.setText("Modification MongoDB non prise en charge ici.")
-                return
 
-            curseur = self.connection.cursor()
-            requete = self.module.query.voir_contenu_table(self.table_name)
-            curseur.execute(requete)
-            lignes = curseur.fetchall()
-            colonnes = [desc[0] for desc in curseur.description]
-
-            self.table_widget.setRowCount(len(lignes))
-            self.table_widget.setColumnCount(len(colonnes))
-            self.table_widget.setHorizontalHeaderLabels(colonnes)
-
-            for i, ligne in enumerate(lignes):
-                for j, valeur in enumerate(ligne):
-                    self.table_widget.setItem(i, j, QTableWidgetItem(str(valeur)))
-
-            self.table_widget.resizeColumnsToContents()
-            self.message_label.setText(f"{len(lignes)} lignes affichées.")
-        except Exception as e:
-            self.message_label.setText(f"Erreur : {e}")
-            print(f"[Erreur Modifier_Table_Window] : {e}")
 
     def closeEvent(self, event):
         Close(self, event)

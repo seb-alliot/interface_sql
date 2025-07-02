@@ -5,14 +5,13 @@ def Close(widget, event):
         if connection and not changement:
             try:
                 connection.close()
-                print("Connexion fermée proprement.")
             except Exception as e:
-                print(f"Erreur lors de la fermeture de la connexion : {e}")
+                return f"Erreur lors de la fermeture de la connexion : {e}"
             finally:
                 widget.connection = None
         else:
             if changement:
-                print("Changement de page détecté, pas de fermeture de connexion.")
+                return ["Changement de page en cours, fermeture de la connexion..."]
             elif widget.connection[1]:
                 return ["Aucune connexion active , {widget.connection[1]}"]
     finally:

@@ -13,5 +13,4 @@ def voir_contenu_table(connection, choix_bdd, table_name):
         collection = db[table_name]
         return list(collection.find())
     except Exception as e:
-        print(f"Erreur lors de la récupération de la collection : {e}")
         return []

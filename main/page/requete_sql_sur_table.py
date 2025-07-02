@@ -20,13 +20,13 @@ load_dotenv(dotenv_path=project_root / ".env")
 
 
 class Requete_sql_sur_table(QWidget):
-    def __init__(self, style_base_donné, connection, choix_bdd , table_name):
+    def __init__(self, style_base_donne, connection, choix_bdd , table_name):
         super().__init__()
         self.setWindowTitle("Console SQL")
         self.resize(800, 600)
 
-        self.style_base_donné = style_base_donné
-        self.module = importer_module_bdd(self.style_base_donné)
+        self.style_base_donne = style_base_donne
+        self.module = importer_module_bdd(self.style_base_donne)
         self.connection = connection
         self.choix_bdd = choix_bdd
         self.table_name = table_name
@@ -58,11 +58,11 @@ class Requete_sql_sur_table(QWidget):
         self.hide()
         from main.page.gestion_table import GestionTableWindow
         self.menu_window = GestionTableWindow(
-            self.style_base_donné,
+            self.style_base_donne,
             self.connection,
             self.choix_bdd,
             table_name= recuperer_tables(
-                self.style_base_donné,
+                self.style_base_donne,
                 self.connection,
                 self.choix_bdd
             )

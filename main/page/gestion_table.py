@@ -37,18 +37,18 @@ class GestionTableWindow(QWidget):
         }
     """
 
-    def __init__(self, style_base_donné, connection, choix_bdd, table_name):
+    def __init__(self, style_base_donne, connection, choix_bdd, table_name):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         self.setFocus()
-        self.style_base_donné = style_base_donné
+        self.style_base_donne = style_base_donne
         self.choix_bdd = choix_bdd
         self.table_name = table_name
         self.connection = connection
 
-        # Import dynamique du module selon style_base_donné
-        self.module = importer_module_bdd(self.style_base_donné)
+        # Import dynamique du module selon style_base_donne
+        self.module = importer_module_bdd(self.style_base_donne)
 
         vertical_layout = QVBoxLayout()
 
@@ -147,7 +147,7 @@ class GestionTableWindow(QWidget):
         fermer_et_transfere(self)
         from main.page.choix_bdd import Menu_bddWindow
         self.menu_bdd_window = Menu_bddWindow(
-            self.style_base_donné,
+            self.style_base_donne,
             self.connection,
             self.choix_bdd,
         )
@@ -157,7 +157,7 @@ class GestionTableWindow(QWidget):
         fermer_et_transfere(self)
         from main.page.requete_sql.afficher_table_sql import Afficher_Table_SQL_Window
         self.requete_sql_window = Afficher_Table_SQL_Window(
-            self.style_base_donné,
+            self.style_base_donne,
             self.connection,
             self.choix_bdd,
             table_name=[self.combo.currentText()],
@@ -172,9 +172,9 @@ class GestionTableWindow(QWidget):
 
     def afficher_console_sql(self):
         fermer_et_transfere(self)
-        from main.page.differente_bdd.requete_sql_sur_table import Requete_sql_sur_table
+        from main.page.requete_sql_sur_table import Requete_sql_sur_table
         self.requete_sql_window = Requete_sql_sur_table(
-            self.style_base_donné,
+            self.style_base_donne,
             self.connection,
             self.choix_bdd,
             table_name=[self.combo.currentText()],

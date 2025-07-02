@@ -14,15 +14,14 @@ from main.utils import Close
 
 
 class Menu_Principal_Window(QWidget):
-    def __init__(self, style_base_donné, connection, choix_bdd=None):
+    def __init__(self, style_base_donne, connection, choix_bdd=None):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         self.setFocus()
-        self.style_base_donné = style_base_donné
+        self.style_base_donne = style_base_donne
         self.connection = connection
-        self.module = importer_module_bdd(self.style_base_donné)
-        print(f"Connection menu principal : {self.connection}")
+        self.module = importer_module_bdd(self.style_base_donne)
         self.choix_bdd = choix_bdd
 
         layout = QVBoxLayout()
@@ -77,7 +76,6 @@ class Menu_Principal_Window(QWidget):
         connection = self.connection[0]
         if connection:
             connection.close()
-            print("Connexion fermée avec succès.")
         from main.page.selection_style_bdd import ChoixBDDWindow
         self.main_window = ChoixBDDWindow(self.connection)
         self.main_window.show()
@@ -89,7 +87,7 @@ class Menu_Principal_Window(QWidget):
         if not self.connection:
             return ["Aucune connexion active"]
 
-        if self.style_base_donné == "MongoDB":
+        if self.style_base_donne == "MongoDB":
             try:
                 query_module = self.module.import_query_module("voir_base")
                 return query_module.voir_base(self.connection[0])
@@ -121,7 +119,7 @@ class Menu_Principal_Window(QWidget):
             return
 
         try:
-            if self.style_base_donné == "MongoDB":
+            if self.style_base_donne == "MongoDB":
                 nouvelle_connection = self.connection
             else:
                 # Récupérer config avec la base choisie
@@ -142,7 +140,7 @@ class Menu_Principal_Window(QWidget):
         self.hide()
         from main.page.choix_bdd import Menu_bddWindow
         self.main_window = Menu_bddWindow(
-            style_base_donné=self.style_base_donné,
+            style_base_donne=self.style_base_donne,
             connection=self.connection,
             choix_bdd=self.choix_bdd_combo.currentText(),
         )
@@ -155,7 +153,7 @@ class Menu_Principal_Window(QWidget):
         self.hide()
         from main.page.configuration import ConfigurationWindow
         self.main_window = ConfigurationWindow(
-            self.style_base_donné,
+            self.style_base_donne,
             connection=self.connection,
         )
         self.main_window.show()

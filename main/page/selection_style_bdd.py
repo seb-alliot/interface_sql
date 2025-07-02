@@ -12,11 +12,11 @@ from main.utils.fonction_diverse import importer_module_bdd
 
 
 class ChoixBDDWindow(QWidget):
-    def __init__(self, connection=None, style_base_donné=None):
+    def __init__(self, connection=None, style_base_donne=None):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
-        self.style_base_donné = style_base_donné
+        self.style_base_donne = style_base_donne
         self.connection = connection
         self.module = None  # stockera l'instance ModuleBDD
 
@@ -60,7 +60,6 @@ class ChoixBDDWindow(QWidget):
         try:
             # Import dynamique du module BDD (config + connection)
             self.module = importer_module_bdd(choix)
-            print(f"Module importé pour {choix}: {self.module}")
             if not self.module:
                 self._set_label("Module introuvable pour ce type de base.", "red")
                 return
@@ -97,15 +96,11 @@ class ChoixBDDWindow(QWidget):
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def ouvrir_fenetre(self, fenetre_a_ouvrir):
-        style_base_donné = self.combo.currentText()
+        style_base_donne = self.combo.currentText()
         self.next_window = fenetre_a_ouvrir(
-            style_base_donné,
+            style_base_donne,
             self.connection,
         )
         self.next_window.show()
         fade_widget(self.next_window, duration=500, fade_in=True)
         fermer_et_transfere(self)
-
-    def _fade_to(self, fenetre_a_ouvrir):
-        fade_widget(self, duration=500, fade_in=False,
-                    finished_callback=lambda: self.ouvrir_fenetre(fenetre_a_ouvrir))

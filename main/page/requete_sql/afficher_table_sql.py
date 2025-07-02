@@ -20,19 +20,19 @@ from main.utils.fonction_diverse import importer_module_bdd
 
 
 class Afficher_Table_SQL_Window(QWidget):
-    def __init__(self, style_base_donné, connection, choix_bdd, table_name):
+    def __init__(self, style_base_donne, connection, choix_bdd, table_name):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - {VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
 
-        self.style_base_donné = style_base_donné
+        self.style_base_donne = style_base_donne
         self.choix_bdd = choix_bdd
         self.table_name = table_name[0] if isinstance(table_name, list) else table_name
         self.connection = connection
 
         # Import dynamique du module adapté à la BDD
-        self.module = importer_module_bdd(self.style_base_donné)
+        self.module = importer_module_bdd(self.style_base_donne)
         self.module_query = self.module.import_query_module("voir_contenu_table")
 
 
@@ -64,7 +64,7 @@ class Afficher_Table_SQL_Window(QWidget):
         if not self.connection:
             self.message_label.setText("Aucune connexion active.")
             return
-        if self.style_base_donné == "MongoDB":
+        if self.style_base_donne == "MongoDB":
             connection = self.connection
         else:
             connection = self.connection[0]
@@ -72,7 +72,7 @@ class Afficher_Table_SQL_Window(QWidget):
             self.message_label.setText("Connexion invalide.")
             return
 
-        if self.style_base_donné == "MongoDB":
+        if self.style_base_donne == "MongoDB":
             try:
                 contenu = self.module_query.voir_contenu_table(connection, self.choix_bdd, self.table_name)
 
@@ -123,11 +123,11 @@ class Afficher_Table_SQL_Window(QWidget):
 
         from main.page.gestion_table import GestionTableWindow
         self.main_window = GestionTableWindow(
-            self.style_base_donné,
+            self.style_base_donne,
             self.connection,
             self.choix_bdd,
             table_name=recuperer_tables(
-                self.style_base_donné,
+                self.style_base_donne,
                 self.connection,
                 self.choix_bdd)
         )

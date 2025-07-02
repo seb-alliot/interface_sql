@@ -5,11 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-print("DB_USER:", os.getenv("DB_USER"))
-print("DB_PASSWORD:", os.getenv("DB_PASSWORD"))
-print("DB_HOST:", os.getenv("DB_HOST"))
-print("DB_PORT:", os.getenv("DB_PORT"))
-print("DB_NAME:", os.getenv("DB_NAME"))
 
 def test_module_bdd(style_base_donne):
     print(f"=== Test pour la base : {style_base_donne} ===")
@@ -38,8 +33,15 @@ def test_module_bdd(style_base_donne):
 
         # Appeler une fonction du module query (par exemple 'lister_bases')
         # Remplace par la fonction réelle définie dans voir_base.py
-        bases = query_module.voir_base(connexion)
-        print("Bases listées :", bases)
+        if test_module_bdd.__name__ == "MongoDB":
+            list_base = query_module.voir_base(connection=connexion)
+            print("Liste des bases MongoDB :", list_base)
+        else:
+            bases = query_module.voir_base()
+            cursor = connexion.cursor()
+            cursor.execute(bases)
+            print( [bdd[0] for bdd in cursor.fetchall()])
+
 
     except ImportError as e:
         print("Erreur d'importation :", e)
@@ -47,5 +49,5 @@ def test_module_bdd(style_base_donne):
         print("Erreur inattendue :", ex)
 
 if __name__ == "__main__":
-    # Lancer le test avec une base existante (PostgreSQL, MariaDB, MongoDB)
-    test_module_bdd("PostgreSQL")
+    style_base_donne = input("Entrez une base de données (PostgreSQL, MariaDB, MongoDB) : ")
+    test_module_bdd(style_base_donne)

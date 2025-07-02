@@ -17,19 +17,19 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 class ConfigurationWindow(QWidget):
-    def __init__(self, style_base_donné, connection):
+    def __init__(self, style_base_donne, connection):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} - v{VERSION}")
         self.resize(600, 400)
         center_on_screen(self)
         self.setFocus()
 
-        self.style_base_donné = style_base_donné
+        self.style_base_donne = style_base_donne
         self.connection = connection
         self.inputs = {}
 
         try:
-            self.module = importer_module_bdd(self.style_base_donné)
+            self.module = importer_module_bdd(self.style_base_donne)
         except ImportError as e:
             self.module = None
             self.message_label.setText(str(e))
@@ -38,7 +38,7 @@ class ConfigurationWindow(QWidget):
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.title_label = QLabel(f"Configuration de la base de données {style_base_donné}.")
+        self.title_label = QLabel(f"Configuration de la base de données {style_base_donne}.")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
         main_layout.addWidget(self.title_label)
@@ -49,7 +49,7 @@ class ConfigurationWindow(QWidget):
         main_layout.addWidget(self.message_label)
 
         self.checkbox_auto_connect = QCheckBox("Connexion automatique")
-        auto_key = f"{self.style_base_donné.upper()}_AUTO_CONNECT"
+        auto_key = f"{self.style_base_donne.upper()}_AUTO_CONNECT"
         auto_connection= os.getenv(auto_key, "False").lower() == "true"
         self.checkbox_auto_connect.setChecked(auto_connection)
         main_layout.addWidget(self.checkbox_auto_connect, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -84,7 +84,7 @@ class ConfigurationWindow(QWidget):
         # Adaptation générique (PostgreSQL, MariaDB, MongoDB)
         champs = []
 
-        # Liste probable des champs pour tous types de base de données
+        # Liste des champs pour tous types de base de données
         mapping = {
             "bdd_name": ("Nom de la base de données", "dbname", "database"),
             "user": ("Nom d'utilisateur", "user"),
@@ -126,8 +126,8 @@ class ConfigurationWindow(QWidget):
 
         try:
             save_bdd_config({
-                **{f"{self.style_base_donné.upper()}_{k.upper()}": v for k, v in data.items()},
-                f"{self.style_base_donné.upper()}_AUTO_CONNECT": auto_connect
+                **{f"{self.style_base_donne.upper()}_{k.upper()}": v for k, v in data.items()},
+                f"{self.style_base_donne.upper()}_AUTO_CONNECT": auto_connect
             })
             self.reload_config()
             self.afficher_message("Configuration enregistrée avec succès.")
@@ -138,7 +138,7 @@ class ConfigurationWindow(QWidget):
     def retour(self):
         self.hide()
         self.main_window = Menu_Principal_Window(
-            style_base_donné=self.style_base_donné,
+            style_base_donne=self.style_base_donne,
             connection=self.connection,
             choix_bdd=None,
         )
