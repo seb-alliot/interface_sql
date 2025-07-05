@@ -26,6 +26,7 @@ class ConfigurationWindow(QWidget):
 
         self.style_base_donne = style_base_donne
         self.connection = connection
+
         self.inputs = {}
 
         try:
@@ -131,7 +132,20 @@ class ConfigurationWindow(QWidget):
             })
             self.reload_config()
             self.afficher_message("Configuration enregistrée avec succès.")
-            QTimer.singleShot(1000, self.retour)
+            config= self.module.config(
+                dbname=data.get("bdd_name"),
+                user=data.get("user"),
+                password=data.get("password"),
+            )
+            connection = self.module.connect(config)
+            if connection:
+                self.afficher_message("Connexion réussie.")
+                self.connection = connection
+                QTimer.singleShot(1000, self.retour)
+            else:
+                self.afficher_message("Échec de la connexion. Veuillez vérifier vos paramètres.")
+                return
+
         except Exception as e:
             self.afficher_message(f"Erreur lors de l'enregistrement : {e}")
 

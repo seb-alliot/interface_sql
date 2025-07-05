@@ -95,27 +95,36 @@ class Afficher_Table_SQL_Window(QWidget):
             except Exception as e:
                 self.message_label.setText(f"Erreur MongoDB : {e}")
             return
+        if isinstance(self.table_name, str):
+            table_names = [self.table_name]
+        else:
+            table_names = self.table_name  # c'est une liste
 
-        # --- Cas SQL (PostgreSQL, MariaDB) ---
-        try:
-            cursor = connection.cursor()
-            cursor.execute(self.module_query.voir_contenu_table(self.table_name))
-            toutes_les_lignes = cursor.fetchall()
-            noms_colonnes = [info[0] for info in cursor.description]
+        for table in table_names:
+            #on iteres sur les tables si c'est une liste sa évite les suprises si le resultat est une liste de tables
+            if not table:
+                self.message_label.setText("Aucune table présente.")
+                return
+            
+            try:
+                cursor = connection.cursor()
+                cursor.execute(self.module_query.voir_contenu_table(table))
+                toutes_les_lignes = cursor.fetchall()
+                noms_colonnes = [info[0] for info in cursor.description]
 
-            self.table_tableau.setRowCount(len(toutes_les_lignes))
-            self.table_tableau.setColumnCount(len(noms_colonnes))
-            self.table_tableau.setHorizontalHeaderLabels(noms_colonnes)
+                self.table_tableau.setRowCount(len(toutes_les_lignes))
+                self.table_tableau.setColumnCount(len(noms_colonnes))
+                self.table_tableau.setHorizontalHeaderLabels(noms_colonnes)
 
-            for i, ligne in enumerate(toutes_les_lignes):
-                for j, valeur in enumerate(ligne):
-                    self.table_tableau.setItem(i, j, QTableWidgetItem(str(valeur)))
+                for i, ligne in enumerate(toutes_les_lignes):
+                    for j, valeur in enumerate(ligne):
+                        self.table_tableau.setItem(i, j, QTableWidgetItem(str(valeur)))
 
-            self.table_tableau.resizeColumnsToContents()
-            self.table_tableau.resizeRowsToContents()
-            self.message_label.setText(f"Contenu de la table {self.table_name} affiché avec succès.")
-        except Exception as e:
-            self.message_label.setText(f"Erreur SQL : {e}")
+                self.table_tableau.resizeColumnsToContents()
+                self.table_tableau.resizeRowsToContents()
+                self.message_label.setText(f"Contenu de la table {table} affiché avec succès.")
+            except Exception as e:
+                self.message_label.setText(f"Erreur SQL : {e}")
 
     def retour(self):
         self.message_label.setText("Retour à la sélection de la table...")

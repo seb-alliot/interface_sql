@@ -9,8 +9,8 @@ load_dotenv(dotenv_path=os.path.join(base_path, '.env'))
 
 APP_SECRET = os.getenv('APP_SECRET')
 
-APP_NAME = "Interface SQL"
-VERSION = "version alpha 0.1.0"
+APP_NAME = "Interface SQL - By Itsuki"
+VERSION = os.getenv("APP_VERSION", "0.0")
 
 def MAJ_DB_CONFIG(user=None, password=None):
 
@@ -23,5 +23,3 @@ def MAJ_DB_CONFIG(user=None, password=None):
     }
 DB_CONFIG = MAJ_DB_CONFIG()
 DB_AUTO_CONNECT =  os.getenv('DB_AUTO_CONNECT', 'False').lower() == 'true'
-
-

@@ -75,7 +75,7 @@ class LoginWindow(QWidget):
         self.bouton_config.setMaximumSize(300, 30)
         self.bouton_config.clicked.connect(self.show_main_config)
         content_layout.addWidget(self.bouton_config, alignment=Qt.AlignmentFlag.AlignCenter)
-        
+
         self.message_info = QLabel("")
         self.message_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(self.message_info, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -124,7 +124,6 @@ class LoginWindow(QWidget):
         self.config_window = ConfigurationWindow(
             self.style_base_donne,
             connection=self.connection,
-            choix_bdd=None
         )
         fade_widget(self.config_window, duration=300, fade_in=True)
         self.config_window.show()

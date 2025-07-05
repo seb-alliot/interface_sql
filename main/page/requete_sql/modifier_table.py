@@ -54,6 +54,5 @@ class Modifier_Table_Window(QWidget):
         self.setLayout(layout)
 
 
-
     def closeEvent(self, event):
         Close(self, event)

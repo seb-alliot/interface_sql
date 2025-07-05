@@ -80,7 +80,6 @@ class ModuleBDD:
 
             # Affiche dans la console le module qui a été chargé
             print(f"✅ Module query importé : {module_path}")
-            print(f"je cherche mongo import {module_query}")
 
             # Retourne le module prêt à être utilisé
             return module_query
