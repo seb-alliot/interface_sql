@@ -120,7 +120,7 @@ class Gerer_Base_Window(QWidget):
 
         self.setLayout(layout)
 
-    def afficher_requete_sql(self, requete: str):
+    def afficher_requete_sql(self, requete):
         self.zone_affichage_sql.append(requete)
 
     def on_action_changed(self, index):
