@@ -1,0 +1,11 @@
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\launcher_c#.csproj.AssemblyReference.cache
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\Avalonia\Resources.Inputs.cache
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\Avalonia\resources
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\launcher_c#.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\launcher_c#.AssemblyInfoInputs.cache
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\launcher_c#.AssemblyInfo.cs
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\launcher_c#.csproj.CoreCompileInputs.cache
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\launcher_c#.sourcelink.json
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\launcher_c#.dll
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\refint\launcher_c#.dll
+C:\Users\allio\OneDrive\Bureau\interface_sql\launcher_c#\obj\Debug\net9.0\launcher_c#.pdb

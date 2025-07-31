@@ -1,15 +1,12 @@
-import sys
 import os
+import keyring
 from dotenv import load_dotenv
-from pathlib import Path
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QPushButton, QLabel, QCheckBox
 from PyQt6.QtCore import Qt, QTimer
 
 from settings import APP_NAME, VERSION
-from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.save_donne.config_bdd import save_bdd_config
 from main.page.menu_principal_bdd import Menu_Principal_Window
-from main.utils import Close
 from main import center_on_screen
 from main.utils.fonction_diverse.import_modul import importer_module_bdd
 
@@ -26,128 +23,130 @@ class ConfigurationWindow(QWidget):
 
         self.style_base_donne = style_base_donne
         self.connection = connection
-
         self.inputs = {}
 
         try:
             self.module = importer_module_bdd(self.style_base_donne)
         except ImportError as e:
+            # Pour minimalisme, on ignore l'erreur ici
             self.module = None
-            self.message_label.setText(str(e))
             return
 
-        main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout = QVBoxLayout()
+        layout.setSpacing(10)  # espace vertical entre widgets
 
-        self.title_label = QLabel(f"Configuration de la base de données {style_base_donne}.")
-        self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
-        main_layout.addWidget(self.title_label)
+        # Titre
+        label_title = QLabel(f"Configuration de la base de données {style_base_donne}.")
+        label_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label_title)
 
+        # Message d'erreur ou infos
         self.message_label = QLabel("")
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.message_label.setStyleSheet("font-size: 14px; color: orange;")
-        main_layout.addWidget(self.message_label)
+        layout.addWidget(self.message_label)
 
+        # Checkbox connexion auto
         self.checkbox_auto_connect = QCheckBox("Connexion automatique")
         auto_key = f"{self.style_base_donne.upper()}_AUTO_CONNECT"
-        auto_connection= os.getenv(auto_key, "False").lower() == "true"
+        auto_connection = os.getenv(auto_key, "False").lower() == "true"
         self.checkbox_auto_connect.setChecked(auto_connection)
-        main_layout.addWidget(self.checkbox_auto_connect, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.checkbox_auto_connect, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        # On récupère dynamiquement la config
+        # Champs config
         champs = self.generer_champs_config(self.module.config())
-
-        for nom_input, placeholder, echo, valeur_defaut in champs:
-            champ = self.creer_input(placeholder, echo)
-            if valeur_defaut and valeur_defaut.lower() != "default":
-                champ.setText(valeur_defaut)
-            champ.setObjectName(nom_input)
-            self.inputs[nom_input] = champ
-            main_layout.addWidget(champ, alignment=Qt.AlignmentFlag.AlignCenter)
+        for key, placeholder, echo, value in champs:
+            input_field = QLineEdit()
+            input_field.setFixedSize(200, 30)
+            input_field.setEchoMode(echo)
+            input_field.setPlaceholderText(placeholder)
+            input_field.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            if value:
+                input_field.setText(value)
+            input_field.setObjectName(key)
+            self.inputs[key] = input_field
+            layout.addWidget(input_field, alignment=Qt.AlignmentFlag.AlignCenter)
 
         if champs:
             self.inputs[champs[0][0]].setFocus()
 
-        self.validation_button = QPushButton("Valider la configuration")
-        self.validation_button.setFixedSize(200, 30)
-        self.validation_button.clicked.connect(self.bouton_validation)
-        main_layout.addWidget(self.validation_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        # Boutons
+        btn_valider = QPushButton("Valider la configuration")
+        btn_valider.setFixedSize(200, 30)
+        btn_valider.clicked.connect(self.bouton_validation)
+        layout.addWidget(btn_valider, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        self.retour_button = QPushButton("Retour")
-        self.retour_button.setFixedSize(200, 30)
-        self.retour_button.clicked.connect(self.retour)
-        main_layout.addWidget(self.retour_button, alignment=Qt.AlignmentFlag.AlignCenter)
+        btn_retour = QPushButton("Retour")
+        btn_retour.setFixedSize(200, 30)
+        btn_retour.clicked.connect(self.retour)
+        layout.addWidget(btn_retour, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        self.setLayout(main_layout)
+        self.setLayout(layout)
 
     def generer_champs_config(self, config):
-        # Adaptation générique (PostgreSQL, MariaDB, MongoDB)
         champs = []
-
-        # Liste des champs pour tous types de base de données
+        service_name = f"{APP_NAME}::{self.style_base_donne}"
         mapping = {
-            "bdd_name": ("Nom de la base de données", "dbname", "database"),
-            "user": ("Nom d'utilisateur", "user"),
-            "password": ("Mot de passe", "password"),
-            "host": ("Hôte", "host"),
-            "port": ("Port", "port"),
-            "app_name": ("Nom de l'application", "app_name")
+            "dbname": ("Nom de la base de données", "DBNAME"),
+            "user": ("Nom d'utilisateur", "USER"),
+            "password": ("Mot de passe", "PASSWORD"),
+            "host": ("Hôte", "HOST"),
+            "port": ("Port", "PORT"),
+            "app_name": ("Nom de l'application", "APPNAME")
         }
 
-        for key, (placeholder, *aliases) in mapping.items():
-            value = ""
-            for alias in aliases:
-                if alias in config:
-                    value = str(config[alias])
-                    break
-            # on transforme le champs en étoiles
+        for key, (placeholder, keyring_key) in mapping.items():
+            value = keyring.get_password(service_name, keyring_key) or ""
             echo = QLineEdit.EchoMode.Password if "password" in key else QLineEdit.EchoMode.Normal
             champs.append((key, placeholder, echo, value))
-
         return champs
-
-    def creer_input(self, placeholder, echo_mode):
-        champ = QLineEdit()
-        champ.setFixedSize(200, 30)
-        champ.setEchoMode(echo_mode)
-        champ.setPlaceholderText(placeholder)
-        champ.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        return champ
 
     def afficher_message(self, message):
         self.message_label.setText(message)
 
-    def reload_config(self):
-        load_dotenv(dotenv_path=dotenv_path, override=True)
-
     def bouton_validation(self):
-        data = {key: champ.text().strip() for key, champ in self.inputs.items()}
+        data = {k: champ.text().strip() for k, champ in self.inputs.items()}
         auto_connect = self.checkbox_auto_connect.isChecked()
 
         try:
+            service_name = f"{APP_NAME}::{self.style_base_donne}"
+
+            for key, champ in self.inputs.items():
+                value = champ.text().strip()
+                if value:
+                    keyring_key = {
+                        "dbname": "DBNAME",
+                        "user": "USER",
+                        "password": "PASSWORD",
+                        "host": "HOST",
+                        "port": "PORT",
+                        "app_name": "APPNAME"
+                    }.get(key, key.upper())
+                    keyring.set_password(service_name, keyring_key, value)
+
             save_bdd_config({
-                **{f"{self.style_base_donne.upper()}_{k.upper()}": v for k, v in data.items()},
                 f"{self.style_base_donne.upper()}_AUTO_CONNECT": auto_connect
             })
-            self.reload_config()
+
             self.afficher_message("Configuration enregistrée avec succès.")
-            config= self.module.config(
-                dbname=data.get("bdd_name"),
+
+            config = self.module.config(
+                dbname=data.get("dbname"),
                 user=data.get("user"),
                 password=data.get("password"),
+                host=data.get("host"),
+                port=data.get("port"),
             )
             connection = self.module.connect(config)
+
             if connection:
                 self.afficher_message("Connexion réussie.")
                 self.connection = connection
                 QTimer.singleShot(1000, self.retour)
             else:
                 self.afficher_message("Échec de la connexion. Veuillez vérifier vos paramètres.")
-                return
 
         except Exception as e:
-            self.afficher_message(f"Erreur lors de l'enregistrement : {e}")
+            self.afficher_message(f"Erreur : {e}")
 
     def retour(self):
         self.hide()
@@ -157,8 +156,4 @@ class ConfigurationWindow(QWidget):
             choix_bdd=None,
         )
         self.main_window.show()
-        fade_widget(self.main_window, duration=500, fade_in=True)
         QTimer.singleShot(1000, self.deleteLater)
-
-    def closeEvent(self, event):
-        Close(self, event)

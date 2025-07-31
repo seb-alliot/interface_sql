@@ -1,12 +1,16 @@
+import keyring
 import os
+from settings import APP_NAME
 
-def config(user=None, password=None, dbname=None):
+SERVICE = f"{APP_NAME}::PostgreSQL"
+
+def config(user=None, password=None, dbname=None, host=None, port=None):
     return {
-        "dbname": dbname if dbname is not None else os.getenv("POSTGRESQL_BDD_NAME"),
-        "user": user if user is not None else os.getenv("POSTGRESQL_USER"),
-        "password": password if password is not None else os.getenv("POSTGRESQL_PASSWORD"),
-        "host": os.getenv("POSTGRESQL_HOST"),
-        "port": int(os.getenv("POSTGRESQL_PORT", 5432)),
+        "dbname": dbname if dbname is not None else keyring.get_password(SERVICE, "DBNAME"),
+        "user": user if user is not None else keyring.get_password(SERVICE, "USER"),
+        "password": password if password is not None else keyring.get_password(SERVICE, "PASSWORD"),
+        "host": host if host is not None else keyring.get_password(SERVICE, "HOST"),
+        "port": int(port) if port is not None else int(keyring.get_password(SERVICE, "PORT") or 5432),
     }
 
 def auto_connect():

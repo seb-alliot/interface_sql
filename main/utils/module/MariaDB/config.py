@@ -1,12 +1,17 @@
 import os
 
-def config(user=None, password=None, dbname=None):
+import keyring
+from settings import APP_NAME
+
+SERVICE = f"{APP_NAME}::MariaDB"
+
+def config(user=None, password=None, dbname=None, host=None, port=None):
     return {
-        "database": dbname if dbname is not None else os.getenv("MARIADB_BDD_NAME"),
-        "user": user if user is not None else os.getenv("MARIADB_USER"),
-        "password": password if password is not None else os.getenv("MARIADB_PASSWORD"),
-        "host": os.getenv("MARIADB_HOST"),
-        "port": int(os.getenv("MARIADB_PORT", 3306)),
+        "database": dbname if dbname is not None else keyring.get_password(SERVICE, "DBNAME"),
+        "user": user if user is not None else keyring.get_password(SERVICE, "USER"),
+        "password": password if password is not None else keyring.get_password(SERVICE, "PASSWORD"),
+        "host": host if host is not None else keyring.get_password(SERVICE, "HOST"),
+        "port": int(port) if port is not None else int(keyring.get_password(SERVICE, "PORT") or 3306),
     }
 
 def auto_connect():

@@ -1,0 +1,21 @@
+	interface sql workflow =>
+				--lancement,
+				--menu selection de la bdd a gere (postsql, mongo db, etc..)
+				--tentative de connection, sinon configuration dans secret via keyring, c'est gerer apres par le systeme de l'os
+				--Connection sinon message erreur
+				--une fois connecté, menu de gestion
+
+menu gestion ==>
+		--choisir la bdd a administré (select)
+		--parametre bdd(option comme utilisateur, mdp de la bdd, config )
+		--retour en arriere
+		--deconnection
+
+selection bdd ==>
+		--menu
+			--voir l'arborescence de la bdd
+			--selectionné une table
+				--voir le contenu de la table
+				--la modifier(crud)
+				--retour en arriere
+				--bouton annulation (annulé la derniere requete?)

@@ -2,11 +2,17 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-def config(user=None, password=None, dbname=None):
-    user = user or os.getenv("MONGODB_USER")
-    password = password or os.getenv("MONGODB_PASSWORD")
-    host = os.getenv("MONGODB_HOST")
-    dbname = dbname or os.getenv("MONGODB_BDD_NAME")
+import keyring
+from settings import APP_NAME
+
+SERVICE = f"{APP_NAME}::MongoDB"
+
+def config(user=None, password=None, dbname=None, host=None, port=None):
+    user = user or keyring.get_password(SERVICE, "USER")
+    password = password or keyring.get_password(SERVICE, "PASSWORD")
+    host = host or keyring.get_password(SERVICE, "HOST")
+    dbname = dbname or keyring.get_password(SERVICE, "DBNAME")
+    port = port or keyring.get_password(SERVICE, "PORT") or "27017"
 
     uri = f"mongodb+srv://{user}:{password}@{host}/?retryWrites=true&w=majority"
 
@@ -15,16 +21,15 @@ def config(user=None, password=None, dbname=None):
         "user": user,
         "password": password,
         "host": host,
-        "port": int(os.getenv("MONGO_PORT", 27017)),
+        "port": int(port),
         "uri": uri,
     }
 
-
 # Paramètres principaux
-MONGODB_BDD_NAME = os.getenv("MONGODB_BDD_NAME")
-MONGODB_USER = os.getenv("MONGODB_USER")
-MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD")
-MONGODB_HOST = os.getenv("MONGODB_HOST")
+MONGODB_BDD_NAME = keyring.get_password(SERVICE, "DBNAME")
+MONGODB_USER = keyring.get_password(SERVICE, "USER")
+MONGODB_PASSWORD = keyring.get_password(SERVICE, "PASSWORD")
+MONGODB_HOST = keyring.get_password(SERVICE, "HOST")
 
 # URI MongoDB complète
 MONGO_URI = (

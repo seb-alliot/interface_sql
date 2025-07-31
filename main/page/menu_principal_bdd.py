@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from settings import APP_NAME, VERSION
+from settings import APP_NAME, VERSION, MAJ_DB_CONFIG
 
 project_root = Path(__file__).resolve().parent.parent.parent
 if str(project_root) not in sys.path:
@@ -113,7 +113,6 @@ class Menu_Principal_Window(QWidget):
     def connection_bdd(self):
         recharger_env()
         choix_bdd = self.choix_bdd_combo.currentText()
-        nouvelle_connection = None
         if not self.connection:
             self.label_bdd.setText("Aucune connexion active")
             return
@@ -122,16 +121,21 @@ class Menu_Principal_Window(QWidget):
             if self.style_base_donne == "MongoDB":
                 nouvelle_connection = self.connection
             else:
-                # Récupérer config avec la base choisie
-                db_config = self.module.config(dbname=choix_bdd)
-                # Connect retourne juste l'objet connection (pas de tuple)
-                nouvelle_connection = self.module.connect(db_config)
+                # Récupère la config complète depuis keyring (ou autre)
+                db_config = MAJ_DB_CONFIG()  # ta fonction qui récupère user, pass, host, port
+                # Remplace le nom de la base choisi dans le menu
+                db_config['dbname'] = choix_bdd
+
+                # Crée la config complète en passant tous les paramètres
+                config = self.module.config(**db_config)
+
+                # Connecte avec la config complète
+                nouvelle_connection = self.module.connect(config)
                 if not nouvelle_connection:
                     self.label_bdd.setText("Erreur de connexion (connection vide)")
                     return
 
             self.connection = nouvelle_connection
-
             self.menu_bdd()
         except Exception as e:
             self.label_bdd.setText(f"Erreur de connexion : {str(e)}")
@@ -163,3 +167,4 @@ class Menu_Principal_Window(QWidget):
 
     def closeEvent(self, event):
         Close(self, event)
+        self.hide()
