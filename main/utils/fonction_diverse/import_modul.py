@@ -78,15 +78,10 @@ class ModuleBDD:
             # Importation dynamique du module ciblé
             module_query = importlib.import_module(module_path)
 
-            # Affiche dans la console le module qui a été chargé
-            print(f"✅ Module query importé : {module_path}")
-
-            # Retourne le module prêt à être utilisé
             return module_query
 
         except ModuleNotFoundError as e:
             # Si le module n'existe pas, on affiche une erreur et retourne None
-            print(f"❌ Module query '{query_name}' non trouvé dans {base_path} : {e}")
             return None
 
 

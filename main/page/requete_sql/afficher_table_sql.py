@@ -41,7 +41,7 @@ class Afficher_Table_SQL_Window(QWidget):
 
         self.title_label = QLabel(f"Affichage de la table {self.table_name} dans la base de données {self.choix_bdd}.")
         self.title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: black;")
+        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
         layout.addWidget(self.title_label)
 
         self.message_label = QLabel("")
@@ -64,20 +64,28 @@ class Afficher_Table_SQL_Window(QWidget):
         if not self.connection:
             self.message_label.setText("Aucune connexion active.")
             return
+
         if self.style_base_donne == "MongoDB":
             connection = self.connection
         else:
             connection = self.connection[0]
+
         if not connection:
             self.message_label.setText("Connexion invalide.")
             return
 
         if self.style_base_donne == "MongoDB":
             try:
-                contenu = self.module_query.voir_contenu_table(connection, self.choix_bdd, self.table_name)
+                table = self.table_name[0] if isinstance(self.table_name, list) else self.table_name
+                contenu = self.module_query.voir_contenu_table(connection, self.choix_bdd, table)
+
+                if isinstance(contenu, dict):
+                    contenu = [contenu]
+                elif not isinstance(contenu, list):
+                    raise ValueError("Le contenu doit être une liste ou un dictionnaire.")
 
                 if not contenu:
-                    self.message_label.setText(f"La collection {self.table_name} est vide ou inexistante.")
+                    self.message_label.setText(f"La collection {table} est vide ou inexistante.")
                     return
 
                 colonnes = list({clef for document in contenu for clef in document.keys()})
@@ -91,21 +99,18 @@ class Afficher_Table_SQL_Window(QWidget):
                         self.table_tableau.setItem(ligne, col, QTableWidgetItem(str(valeur)))
 
                 self.table_tableau.resizeColumnsToContents()
-                self.message_label.setText(f"{len(contenu)} documents affichés depuis {self.table_name}")
+                self.message_label.setText(f"{len(contenu)} documents affichés depuis {table}")
+
             except Exception as e:
                 self.message_label.setText(f"Erreur MongoDB : {e}")
             return
-        if isinstance(self.table_name, str):
-            table_names = [self.table_name]
-        else:
-            table_names = self.table_name  # c'est une liste
 
+        # Partie SQL
+        table_names = [self.table_name] if isinstance(self.table_name, str) else self.table_name
         for table in table_names:
-            #on iteres sur les tables si c'est une liste sa évite les suprises si le resultat est une liste de tables
             if not table:
                 self.message_label.setText("Aucune table présente.")
                 return
-            
             try:
                 cursor = connection.cursor()
                 cursor.execute(self.module_query.voir_contenu_table(table))
@@ -116,9 +121,9 @@ class Afficher_Table_SQL_Window(QWidget):
                 self.table_tableau.setColumnCount(len(noms_colonnes))
                 self.table_tableau.setHorizontalHeaderLabels(noms_colonnes)
 
-                for i, ligne in enumerate(toutes_les_lignes):
-                    for j, valeur in enumerate(ligne):
-                        self.table_tableau.setItem(i, j, QTableWidgetItem(str(valeur)))
+                for colonnes, ligne in enumerate(toutes_les_lignes):
+                    for clef, valeur in enumerate(ligne):
+                        self.table_tableau.setItem(colonnes, clef, QTableWidgetItem(str(valeur)))
 
                 self.table_tableau.resizeColumnsToContents()
                 self.table_tableau.resizeRowsToContents()

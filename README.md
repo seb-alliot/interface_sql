@@ -1,6 +1,8 @@
 pour créer un raccourcis sur le bureau mettre le chemin de python utiliser avec les dépendances puis celle du script qui lance l'application
 "C:\Program Files\Python313\python.exe" -m PyInstaller --onefile --add-data "main;main" appli.py
 
+# la --add-data permet d'ajouter des fichier ou dossier a pyinstaller
+
 faire le fichier exe en local sur mon ordi perso :
 vs code, activé l'environnement, puis python -m PyInstaller --onefile --windowed --add-data "main;main" --add-data ".env;." appli.py
 

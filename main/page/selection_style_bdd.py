@@ -1,26 +1,32 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton
 
-from settings import VERSION, APP_NAME
+import settings
 from main.utils.regles_visuelles.fad_widjet import fade_widget
 from main.utils.fonction_diverse.recharge_env import recharger_env
 from main.utils import fermer_et_transfere, Close
 from main.utils.fonction_diverse import importer_module_bdd
-import psutil
 import sys
+import os
+from dotenv import load_dotenv
+if getattr(sys, 'frozen', False):
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.dirname(__file__)
 
+load_dotenv(dotenv_path=os.path.join(base_path, '.env'))
 
-#if "--from-launcher" not in sys.argv:
-#    from PyQt6.QtWidgets import QApplication, QMessageBox
-#    app = QApplication(sys.argv)
-#    QMessageBox.critical(None, "Erreur", "L'application doit être lancée via le launcher.")
-#    sys.exit(1)
+if "--from-launcher" not in sys.argv:
+    from PyQt6.QtWidgets import QApplication, QMessageBox
+    app = QApplication(sys.argv)
+    QMessageBox.critical(None, "Erreur", "L'application doit être lancée via le launcher.")
+    sys.exit(1)
 
 
 class ChoixBDDWindow(QWidget):
     def __init__(self, connection=None, style_base_donne=None):
         super().__init__()
-        self.setWindowTitle(f"{APP_NAME} - {VERSION}")
+        self.setWindowTitle(f"{settings.APP_NAME} - {settings.VERSION}")
         self.resize(600, 400)
         self.style_base_donne = style_base_donne
         self.connection = connection
