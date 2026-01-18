@@ -13,7 +13,7 @@ from main.utils import Close
 from main.utils.fonction_diverse import importer_module_bdd
 
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton, QHBoxLayout
+    QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
 )
 from PyQt6.QtCore import Qt, QTimer
 
