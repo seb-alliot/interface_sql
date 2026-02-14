@@ -20,7 +20,7 @@ if BASE_DIR not in sys.path:
 
 # Import des paramètres
 import settings
-from launcher.utils.mise_a_jour import VerifMajThread
+# from launcher.utils.mise_a_jour import VerifMajThread
 
 class LauncherWindow(QWidget):
     def __init__(self):
@@ -42,7 +42,7 @@ class LauncherWindow(QWidget):
 
         self.setLayout(layout)
 
-        self.thread_maj = VerifMajThread()
+        # self.thread_maj = VerifMajThread()
         self.thread_maj.maj_result.connect(self.update_label)
         self.thread_maj.maj_finie.connect(self.lancer_remplacement_si_necessaire)
         self.thread_maj.start()

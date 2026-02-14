@@ -16,11 +16,11 @@ else:
 
 load_dotenv(dotenv_path=os.path.join(base_path, '.env'))
 
-if "--from-launcher" not in sys.argv:
-    from PyQt6.QtWidgets import QApplication, QMessageBox
-    app = QApplication(sys.argv)
-    QMessageBox.critical(None, "Erreur", "L'application doit être lancée via le launcher.")
-    sys.exit(1)
+# if "--from-launcher" not in sys.argv:
+#     from PyQt6.QtWidgets import QApplication, QMessageBox
+#     app = QApplication(sys.argv)
+#     QMessageBox.critical(None, "Erreur", "L'application doit être lancée via le launcher.")
+#     sys.exit(1)
 
 
 class ChoixBDDWindow(QWidget):
